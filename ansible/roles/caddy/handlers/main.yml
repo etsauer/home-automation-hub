@@ -1,0 +1,8 @@
+---
+- name: Reload systemd
+  ansible.builtin.command: systemctl daemon-reload
+  become: true
+  when:
+    - not ansible_check_mode
+    - not (caddy_rehearsal_mode | default(false) | bool)
+    - caddy_manage_service | default(false) | bool

@@ -1,0 +1,28 @@
+---
+# CHECK-MODE ONLY against the Pi inventory.
+# This will not write files when check_mode is active.
+# Prefer single-role fix playbooks (e.g. fix-caddy.yml) during recovery.
+#
+#   ansible-playbook -i ansible/hosts ansible/dry-run.yml --check --diff
+- name: Check-mode dry-run against the Raspberry Pi
+  hosts: pi
+  become: true
+  gather_facts: true
+  check_mode: true
+  vars_files:
+    - group_vars/all/secrets.yml
+  pre_tasks:
+    - name: Refuse to run unless Ansible check mode is active
+      ansible.builtin.assert:
+        that:
+          - ansible_check_mode | bool
+        fail_msg: >-
+          dry-run.yml is check-mode only and refuses real changes.
+          Use fix-caddy.yml (write-only) or site.yml deliberately if you intend to modify the Pi.
+  roles:
+    - role: podman
+    - role: caddy
+    - role: godaddy_ddns
+    - role: frigate
+    - role: homeassistant
+    - role: mosquitto

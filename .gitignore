@@ -1,0 +1,8 @@
+.secrets
+# Inventory and extracted temporary files
+ansible/ansible/collected/*.tar.gz
+ansible/extracted/
+ansible/group_vars/all/secrets.yml
+.rehearsal/
+ansible/.rehearsal/
+.ansible-tmp/

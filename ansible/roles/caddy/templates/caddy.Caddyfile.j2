@@ -1,0 +1,8 @@
+{%- if caddy_email | default('') %}
+{
+    email {{ caddy_email }}
+}
+{% endif %}
+{{ caddy_domain }} {
+    reverse_proxy {{ caddy_upstream_host }}:{{ caddy_upstream_port }}
+}

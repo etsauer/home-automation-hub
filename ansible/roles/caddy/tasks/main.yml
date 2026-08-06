@@ -1,0 +1,63 @@
+---
+- name: Validate Caddy configuration values
+  ansible.builtin.assert:
+    that:
+      - caddy_domain is defined
+      - caddy_domain | length > 0
+      - caddy_domain != "example.com"
+      - caddy_upstream_host is defined
+      - caddy_upstream_host | length > 0
+      - caddy_upstream_port is defined
+    fail_msg: >-
+      Set a real caddy_domain (not example.com) and upstream host/port before deploying Caddy.
+
+- name: Ensure caddy config dir exists
+  ansible.builtin.file:
+    path: "{{ caddy_config_dir }}"
+    state: directory
+    owner: "{{ caddy_owner }}"
+    group: "{{ caddy_group }}"
+    mode: "0755"
+
+- name: Ensure caddy systemd directory exists
+  ansible.builtin.file:
+    path: "{{ caddy_systemd_dir }}"
+    state: directory
+    owner: "{{ caddy_owner }}"
+    group: "{{ caddy_group }}"
+    mode: "0755"
+
+- name: Deploy Caddyfile template
+  ansible.builtin.template:
+    src: caddy.Caddyfile.j2
+    dest: "{{ caddy_config_dir }}/Caddyfile"
+    owner: "{{ caddy_owner }}"
+    group: "{{ caddy_group }}"
+    mode: "0644"
+    backup: true
+
+- name: Deploy container systemd unit (container file)
+  ansible.builtin.template:
+    src: caddy.container.j2
+    dest: "{{ caddy_systemd_dir }}/caddy.container"
+    owner: "{{ caddy_owner }}"
+    group: "{{ caddy_group }}"
+    mode: "0644"
+    backup: true
+  notify: Reload systemd
+
+- name: Apply systemd changes for Caddy
+  when:
+    - not ansible_check_mode
+    - not caddy_rehearsal_mode | bool
+    - caddy_manage_service | bool
+  block:
+    - name: Flush handlers so Quadlet can regenerate caddy.service
+      ansible.builtin.meta: flush_handlers
+
+    - name: Enable and start caddy.service
+      ansible.builtin.systemd:
+        name: caddy.service
+        enabled: true
+        state: started
+        daemon_reload: true

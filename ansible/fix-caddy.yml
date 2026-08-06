@@ -1,0 +1,18 @@
+---
+# Recover / redeploy Caddy only.
+# Default is write-only: updates Caddyfile + caddy.container with backups,
+# and does NOT daemon-reload, enable, or start the service.
+#
+# After reviewing the files on the Pi, cut over manually or re-run with:
+#   -e caddy_manage_service=true
+#
+# Preview first:
+#   ansible-playbook -i ansible/hosts ansible/fix-caddy.yml --check --diff
+- name: Fix Caddy on the Pi (write-only by default)
+  hosts: pi
+  become: true
+  gather_facts: true
+  vars:
+    caddy_manage_service: false
+  roles:
+    - role: caddy

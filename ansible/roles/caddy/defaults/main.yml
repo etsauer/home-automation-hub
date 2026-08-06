@@ -1,0 +1,15 @@
+---
+# caddy defaults
+caddy_config_dir: /etc/caddy
+caddy_image: docker.io/library/caddy:latest
+caddy_data_volume: caddy_data
+caddy_systemd_dir: /etc/containers/systemd
+caddy_owner: root
+caddy_group: root
+caddy_rehearsal_mode: false
+# When false: write Caddyfile + .container only (with backups). No daemon-reload, enable, or start.
+caddy_manage_service: false
+caddy_domain: hass.mre.coffee
+caddy_email: ""
+caddy_upstream_host: localhost
+caddy_upstream_port: 8123

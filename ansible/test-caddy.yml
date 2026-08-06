@@ -1,0 +1,15 @@
+---
+- name: Rehearse the Caddy role locally
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: false
+  vars:
+    caddy_rehearsal_mode: true
+    caddy_owner: "{{ ansible_facts['user_id'] }}"
+    caddy_group: "{{ ansible_facts['user_gid'] }}"
+    caddy_config_dir: "{{ playbook_dir }}/.rehearsal/etc/caddy"
+    caddy_data_volume: "{{ playbook_dir }}/.rehearsal/var/lib/caddy"
+    caddy_systemd_dir: "{{ playbook_dir }}/.rehearsal/etc/containers/systemd"
+  roles:
+    - role: caddy
