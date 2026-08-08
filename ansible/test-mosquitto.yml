@@ -1,0 +1,18 @@
+---
+- name: Rehearse the Mosquitto role locally
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: false
+  vars:
+    mosq_rehearsal_mode: true
+    mosq_owner: "{{ ansible_facts['user_id'] }}"
+    mosq_group: "{{ ansible_facts['user_gid'] }}"
+    mosq_uid: "{{ ansible_facts['user_uid'] }}"
+    mosq_gid: "{{ ansible_facts['user_gid'] }}"
+    mosq_config_dir: "{{ playbook_dir }}/.rehearsal/opt/mosquitto/config"
+    mosq_data_dir: "{{ playbook_dir }}/.rehearsal/opt/mosquitto/data"
+    mosq_log_dir: "{{ playbook_dir }}/.rehearsal/opt/mosquitto/log"
+    mosq_systemd_dir: "{{ playbook_dir }}/.rehearsal/etc/containers/systemd"
+  roles:
+    - role: mosquitto

@@ -1,0 +1,66 @@
+---
+- name: Validate Mosquitto configuration values
+  ansible.builtin.assert:
+    that:
+      - mosq_image is defined
+      - mosq_image | length > 0
+      - mosq_config_dir is defined
+      - mosq_data_dir is defined
+      - mosq_log_dir is defined
+      - mosq_listener_port is defined
+      - mosq_publish_port is defined
+      - mosq_allow_anonymous is defined
+    fail_msg: >-
+      Set mosq_image, dirs, ports, and mosq_allow_anonymous before deploying mosquitto.
+
+- name: Ensure Mosquitto directories exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ mosq_config_dir }}"
+      owner: "{{ mosq_owner }}"
+      group: "{{ mosq_gid }}"
+      mode: "0755"
+    - path: "{{ mosq_data_dir }}"
+      owner: "{{ mosq_uid }}"
+      group: "{{ mosq_gid }}"
+      mode: "0755"
+    - path: "{{ mosq_log_dir }}"
+      owner: "{{ mosq_uid }}"
+      group: "{{ mosq_gid }}"
+      mode: "0755"
+    - path: "{{ mosq_systemd_dir }}"
+      owner: "{{ mosq_owner }}"
+      group: "{{ mosq_group }}"
+      mode: "0755"
+
+- name: Deploy mosquitto.conf
+  ansible.builtin.template:
+    src: mosquitto.conf.j2
+    dest: "{{ mosq_config_dir }}/mosquitto.conf"
+    owner: "{{ mosq_owner }}"
+    group: "{{ mosq_gid }}"
+    mode: "0640"
+    backup: true
+  notify: Restart mosquitto
+
+- name: Deploy mosquitto container systemd unit
+  ansible.builtin.template:
+    src: mosquitto.container.j2
+    dest: "{{ mosq_systemd_dir }}/mosquitto.container"
+    owner: "{{ mosq_owner }}"
+    group: "{{ mosq_group }}"
+    mode: "0644"
+    backup: true
+  notify: Restart mosquitto
+
+- name: Apply notified mosquitto service changes
+  when:
+    - not ansible_check_mode
+    - not mosq_rehearsal_mode | bool
+    - mosq_manage_service | bool
+  ansible.builtin.meta: flush_handlers
