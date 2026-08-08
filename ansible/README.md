@@ -39,21 +39,33 @@ The deployment playbooks use variables from:
 
 Those values should be populated from a secure secret source before any production deployment. Placeholder values are not suitable for a real deployment.
 
-### Recover one service at a time
+### Production entrypoint
 
-During recovery, prefer single-role fix playbooks instead of [site.yml](site.yml):
+The steady-state deployment entrypoint is:
+
+- [ansible/site.yml](site.yml)
+
+It enables only roles that have been validated against the live host. As each
+service is recovered, enable it there (see root [AGENTS.md](../AGENTS.md)).
+
+### Temporary recovery playbooks (`fix-*`)
+
+While catching up to live server state, single-role fix playbooks are useful:
 
 - [ansible/fix-caddy.yml](fix-caddy.yml)
 - [ansible/fix-godaddy-ddns.yml](fix-godaddy-ddns.yml)
 
-These target `pi`, write only that service's config + Quadlet `.container` (with Ansible backups), and **do not** daemon-reload or start/restart unless you pass `-e <role>_manage_service=true`.
+These default to write-only (`*_manage_service=false`) with Ansible backups.
+They are temporary necessities — fold each service into `site.yml` once cutover
+is known-good, rather than treating `fix-*` as the long-term workflow.
 
-Suggested flow (per service):
+Suggested recovery flow (per unrecovered service):
 
 1. Rehearse locally with the matching `test-*.yml` playbook and inspect `.rehearsal/`.
 2. Preview on the Pi: `ansible-playbook -i ansible/hosts ansible/fix-<service>.yml --check --diff`
-3. Apply write-only: `ansible-playbook -i ansible/hosts ansible/fix-<service>.yml`
-4. On the Pi, inspect the rendered files, then cut over the running container deliberately.
+3. Apply write-only, inspect rendered files, then cut over with
+   `-e <role>_manage_service=true` (or an equivalent deliberate restart).
+4. Enable the role in [site.yml](site.yml).
 
 ### Dry-run usage
 
@@ -61,20 +73,7 @@ The check-mode playbook is:
 
 - [ansible/dry-run.yml](dry-run.yml)
 
-It targets `pi` with `check_mode: true` and **refuses** to run if check mode is not active. Prefer `fix-caddy.yml` while recovering individual services.
-
-### Production deployment
-
-When the environment is ready, the main deployment entrypoint is:
-
-- [ansible/site.yml](site.yml)
-
-Use it only after:
-
-- secrets are available and populated correctly
-- the target host is reachable
-- the relevant role templates have been validated locally
-- you intentionally want every role, not a single-service fix
+It targets `pi` with `check_mode: true` and **refuses** to run if check mode is not active.
 
 ## Security
 
