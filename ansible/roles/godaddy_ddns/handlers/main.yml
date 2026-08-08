@@ -1,0 +1,12 @@
+---
+- name: Restart godaddy-ddns
+  ansible.builtin.systemd:
+    name: godaddy-ddns.service
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  become: true
+  when:
+    - not ansible_check_mode
+    - not (gd_rehearsal_mode | default(false) | bool)
+    - gd_manage_service | default(false) | bool

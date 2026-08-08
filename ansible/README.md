@@ -15,11 +15,12 @@ Collected tarball will be placed in [ansible/collected](collected/).
 
 ### Local rehearsal for a single role
 
-For local validation of a role or template, use a rehearsal playbook instead of the production deployment playbooks. The current example is:
+For local validation of a role or template, use a rehearsal playbook instead of the production deployment playbooks. Current examples:
 
 - [ansible/test-caddy.yml](test-caddy.yml)
+- [ansible/test-godaddy-ddns.yml](test-godaddy-ddns.yml)
 
-This playbook runs locally against `localhost`, uses temporary paths inside the repository, and skips real systemd/service activation so it does not modify the host machine.
+These playbooks run locally against `localhost`, use temporary paths inside the repository, and skip real systemd/service activation so they do not modify the host machine.
 
 ### Why this is safe
 
@@ -43,15 +44,16 @@ Those values should be populated from a secure secret source before any producti
 During recovery, prefer single-role fix playbooks instead of [site.yml](site.yml):
 
 - [ansible/fix-caddy.yml](fix-caddy.yml)
+- [ansible/fix-godaddy-ddns.yml](fix-godaddy-ddns.yml)
 
-`fix-caddy.yml` targets `pi`, writes only the Caddyfile and Quadlet `.container` (with Ansible backups), and **does not** daemon-reload or start/restart Caddy unless you pass `-e caddy_manage_service=true`.
+These target `pi`, write only that service's config + Quadlet `.container` (with Ansible backups), and **do not** daemon-reload or start/restart unless you pass `-e <role>_manage_service=true`.
 
-Suggested flow:
+Suggested flow (per service):
 
-1. Rehearse locally with [test-caddy.yml](test-caddy.yml) and inspect `.rehearsal/`.
-2. Preview on the Pi: `ansible-playbook -i ansible/hosts ansible/fix-caddy.yml --check --diff`
-3. Apply write-only: `ansible-playbook -i ansible/hosts ansible/fix-caddy.yml`
-4. On the Pi, validate the Caddyfile and inspect the new unit file, then cut over the running container deliberately.
+1. Rehearse locally with the matching `test-*.yml` playbook and inspect `.rehearsal/`.
+2. Preview on the Pi: `ansible-playbook -i ansible/hosts ansible/fix-<service>.yml --check --diff`
+3. Apply write-only: `ansible-playbook -i ansible/hosts ansible/fix-<service>.yml`
+4. On the Pi, inspect the rendered files, then cut over the running container deliberately.
 
 ### Dry-run usage
 

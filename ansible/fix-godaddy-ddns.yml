@@ -1,0 +1,22 @@
+---
+# Recover / redeploy GoDaddy DDNS only.
+# Default is write-only: updates the script + godaddy-ddns.container with backups,
+# and does NOT daemon-reload, enable, or restart the service.
+#
+# Requires real gd_key / gd_secret in group_vars/all/secrets.yml.
+#
+# After reviewing the files on the Pi, cut over with the playbook:
+#   ansible-playbook -i ansible/hosts ansible/fix-godaddy-ddns.yml -e gd_manage_service=true
+#
+# Preview first:
+#   ansible-playbook -i ansible/hosts ansible/fix-godaddy-ddns.yml --check --diff
+- name: Fix GoDaddy DDNS on the Pi (write-only by default)
+  hosts: pi
+  become: true
+  gather_facts: true
+  vars_files:
+    - group_vars/all/secrets.yml
+  vars:
+    gd_manage_service: false
+  roles:
+    - role: godaddy_ddns
