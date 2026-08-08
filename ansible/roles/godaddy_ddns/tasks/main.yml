@@ -1,0 +1,70 @@
+---
+- name: Validate GoDaddy DDNS configuration values
+  ansible.builtin.assert:
+    that:
+      - gd_domain is defined
+      - gd_domain | length > 0
+      - gd_domain != "example.com"
+      - gd_subdomain is defined
+      - gd_subdomain | length > 0
+      - gd_key is defined
+      - gd_key | length > 0
+      - gd_key != "REPLACE_ME"
+      - gd_secret is defined
+      - gd_secret | length > 0
+      - gd_secret != "REPLACE_ME"
+    fail_msg: >-
+      Set real gd_domain / gd_subdomain / gd_key / gd_secret (not REPLACE_ME)
+      in group_vars/all/secrets.yml before deploying godaddy_ddns.
+
+- name: Ensure ddns script parent directory exists
+  ansible.builtin.file:
+    path: "{{ gd_script_path | dirname }}"
+    state: directory
+    owner: "{{ gd_owner }}"
+    group: "{{ gd_group }}"
+    mode: "0755"
+
+- name: Ensure godaddy-ddns systemd directory exists
+  ansible.builtin.file:
+    path: "{{ gd_systemd_dir }}"
+    state: directory
+    owner: "{{ gd_owner }}"
+    group: "{{ gd_group }}"
+    mode: "0755"
+
+- name: Deploy GoDaddy DDNS script
+  ansible.builtin.template:
+    src: godaddy-ddns.sh.j2
+    dest: "{{ gd_script_path }}"
+    owner: "{{ gd_owner }}"
+    group: "{{ gd_group }}"
+    mode: "0755"
+    backup: true
+  notify: Restart godaddy-ddns
+
+- name: Deploy godaddy-ddns container systemd unit
+  ansible.builtin.template:
+    src: godaddy-ddns.container.j2
+    dest: "{{ gd_systemd_dir }}/godaddy-ddns.container"
+    owner: "{{ gd_owner }}"
+    group: "{{ gd_group }}"
+    mode: "0644"
+    backup: true
+  notify: Restart godaddy-ddns
+
+- name: Remove legacy host-PATH DDNS script if present
+  ansible.builtin.file:
+    path: "{{ gd_legacy_script_path }}"
+    state: absent
+  when:
+    - gd_legacy_script_path | length > 0
+    - gd_legacy_script_path != gd_script_path
+  notify: Restart godaddy-ddns
+
+- name: Apply notified godaddy-ddns service changes
+  when:
+    - not ansible_check_mode
+    - not gd_rehearsal_mode | bool
+    - gd_manage_service | bool
+  ansible.builtin.meta: flush_handlers

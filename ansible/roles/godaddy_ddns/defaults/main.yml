@@ -1,0 +1,17 @@
+---
+# godaddy ddns defaults
+gd_domain: mre.coffee
+gd_subdomain: hass
+gd_image: docker.io/alpine:latest
+# Container-only script lives under /etc (not /usr/local/bin host PATH).
+gd_script_path: /etc/godaddy-ddns/godaddy-ddns.sh
+# Removed on deploy when present (pre-migration host PATH location).
+gd_legacy_script_path: /usr/local/bin/godaddy-ddns.sh
+gd_systemd_dir: /etc/containers/systemd
+gd_owner: root
+gd_group: root
+gd_rehearsal_mode: false
+# When false: write script + .container only (with backups). No daemon-reload, enable, or restart.
+gd_manage_service: false
+# Poll interval inside the DDNS loop (seconds)
+gd_sleep_seconds: 300

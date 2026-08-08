@@ -1,0 +1,37 @@
+---
+# Steady-state entrypoint for the home automation hub.
+# Only enable roles that have been validated against the live Pi.
+# Unrecovered services stay commented until their fix-* cutover is done.
+- name: Configure Raspberry Pi hosts
+  hosts: pi
+  become: true
+  gather_facts: true
+  vars_files:
+    - group_vars/all/secrets.yml
+  pre_tasks:
+    - name: Ensure secrets required by enabled roles are defined
+      ansible.builtin.assert:
+        that:
+          - gd_key is defined
+          - gd_key | length > 0
+          - gd_key != "REPLACE_ME"
+          - gd_secret is defined
+          - gd_secret | length > 0
+          - gd_secret != "REPLACE_ME"
+        fail_msg: >-
+          Define gd_key and gd_secret in group_vars/all/secrets.yml before
+          running site.yml (required by godaddy_ddns).
+  roles:
+    # Validated / enabled
+    - role: caddy
+      vars:
+        caddy_manage_service: true
+    - role: godaddy_ddns
+      vars:
+        gd_manage_service: true
+
+    # Not yet recovered — do not enable until fix-* cutover is known-good:
+    # - role: podman
+    # - role: frigate
+    # - role: homeassistant
+    # - role: mosquitto

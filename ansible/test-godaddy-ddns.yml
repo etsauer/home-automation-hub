@@ -1,0 +1,18 @@
+---
+- name: Rehearse the GoDaddy DDNS role locally
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: false
+  vars:
+    gd_rehearsal_mode: true
+    gd_owner: "{{ ansible_facts['user_id'] }}"
+    gd_group: "{{ ansible_facts['user_gid'] }}"
+    gd_script_path: "{{ playbook_dir }}/.rehearsal/etc/godaddy-ddns/godaddy-ddns.sh"
+    gd_legacy_script_path: "{{ playbook_dir }}/.rehearsal/usr/local/bin/godaddy-ddns.sh"
+    gd_systemd_dir: "{{ playbook_dir }}/.rehearsal/etc/containers/systemd"
+    # Placeholder credentials for local template rendering only — not real secrets.
+    gd_key: rehearsal-key
+    gd_secret: rehearsal-secret
+  roles:
+    - role: godaddy_ddns

@@ -1,0 +1,60 @@
+#!/bin/sh
+# GoDaddy DDNS updater — reference copy of the live script.
+# Deployed via ansible/roles/godaddy_ddns/templates/godaddy-ddns.sh.j2
+# to /etc/godaddy-ddns/godaddy-ddns.sh on the Pi.
+# Expects GD_DOMAIN, GD_SUBDOMAIN, and GD_SECRET in the environment.
+
+set -eu
+
+apk add --no-cache curl jq >/dev/null
+
+DOMAIN="${GD_DOMAIN:?GD_DOMAIN is required}"
+SUBDOMAIN="${GD_SUBDOMAIN:?GD_SUBDOMAIN is required}"
+SECRET="${GD_SECRET:?GD_SECRET is required}"
+
+while true; do
+    # Fetch clean public IP
+    IP=$(curl -s -4 https://icanhazip.com || curl -s -4 https://ifconfig.me)
+    IP=$(echo "$IP" | tr -d '[:space:]')
+
+    if echo "$IP" | grep -Eq '^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$'; then
+        echo "Attempting to sync IP: $IP"
+
+        # Get recordId for the subdomain A record
+        echo "Attempting to fetch record"
+        RECORD_ID=$(curl -s -X GET "https://api.godaddy.com/v3/domains/zones/${DOMAIN}/dns-records?name=${SUBDOMAIN}" \
+          -H "Authorization: Bearer ${SECRET}" | jq .items[0].recordId -r)
+
+        # Delete existing record when present
+        if [ -n "$RECORD_ID" ] && [ "$RECORD_ID" != "null" ]; then
+            echo "Attempting to delete existing recordId $RECORD_ID"
+            curl -s -X DELETE "https://api.godaddy.com/v3/domains/zones/${DOMAIN}/dns-records/${RECORD_ID}" \
+              -H "Authorization: Bearer ${SECRET}"
+        else
+            echo "No existing recordId found for ${SUBDOMAIN}.${DOMAIN}"
+        fi
+
+        # Create the record with new IP
+        echo "Attempting to create a new record"
+        HTTP_RESPONSE=$(curl -s -L -w "\nHTTP_STATUS:%{http_code}" -X POST "https://api.godaddy.com/v3/domains/zones/${DOMAIN}/dns-records" \
+          -H "Authorization: Bearer ${SECRET}" \
+          -H "Content-Type: application/json" \
+          -d "{ \"type\": \"A\", \"name\": \"${SUBDOMAIN}\", \"data\": \"${IP}\", \"ttl\": 600 }")
+
+        STATUS_CODE=$(echo "$HTTP_RESPONSE" | grep "HTTP_STATUS:" | sed 's/HTTP_STATUS://')
+        BODY=$(echo "$HTTP_RESPONSE" | grep -v "HTTP_STATUS:")
+
+        echo "GoDaddy API HTTP Status: $STATUS_CODE"
+        if [ -n "$BODY" ]; then
+            echo "GoDaddy API Payload: $BODY"
+        fi
+
+        if [ "$STATUS_CODE" = "200" ] || [ "$STATUS_CODE" = "201" ]; then
+            echo "Success! A-record verified and committed."
+        fi
+    else
+        echo "Error: Retrieved an invalid IP address format: $IP"
+    fi
+
+    sleep 300
+done
