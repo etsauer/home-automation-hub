@@ -29,9 +29,11 @@
     - role: godaddy_ddns
       vars:
         gd_manage_service: true
+    - role: mosquitto
+      vars:
+        mosq_manage_service: true
 
     # Not yet recovered — do not enable until fix-* cutover is known-good:
     # - role: podman
     # - role: frigate
     # - role: homeassistant
-    # - role: mosquitto
