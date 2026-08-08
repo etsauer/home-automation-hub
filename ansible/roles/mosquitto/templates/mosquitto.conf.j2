@@ -1,0 +1,8 @@
+# Managed by Ansible — mosquitto role
+# Matches live hub clients (HA / Frigate) which connect without MQTT auth.
+listener {{ mosq_listener_port }}
+allow_anonymous {{ mosq_allow_anonymous | bool | ternary('true', 'false') }}
+{% if mosq_persistence | bool %}
+persistence true
+persistence_location /mosquitto/data/
+{% endif %}

@@ -1,0 +1,21 @@
+---
+# mosquitto defaults (matches pre-incident Pi layout)
+mosq_config_dir: /opt/mosquitto/config
+mosq_data_dir: /opt/mosquitto/data
+mosq_log_dir: /opt/mosquitto/log
+mosq_image: docker.io/library/eclipse-mosquitto:2
+mosq_container_name: mosquitto
+mosq_publish_port: 1883
+mosq_listener_port: 1883
+# Live HA + Frigate MQTT clients have no credentials configured.
+mosq_allow_anonymous: true
+mosq_persistence: true
+# eclipse-mosquitto image runs as uid/gid 1883
+mosq_uid: 1883
+mosq_gid: 1883
+mosq_systemd_dir: /etc/containers/systemd
+mosq_owner: root
+mosq_group: root
+mosq_rehearsal_mode: false
+# When false: write conf + .container only (with backups). No daemon-reload/restart.
+mosq_manage_service: false

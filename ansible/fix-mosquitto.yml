@@ -1,0 +1,18 @@
+---
+# Recover / redeploy Mosquitto only.
+# Default is write-only: updates mosquitto.conf + mosquitto.container with backups,
+# and does NOT daemon-reload, enable, or restart the service.
+#
+# After reviewing the files on the Pi, cut over with the playbook:
+#   ansible-playbook -i ansible/hosts ansible/fix-mosquitto.yml -e mosq_manage_service=true
+#
+# Preview first:
+#   ansible-playbook -i ansible/hosts ansible/fix-mosquitto.yml --check --diff
+- name: Fix Mosquitto on the Pi (write-only by default)
+  hosts: pi
+  become: true
+  gather_facts: true
+  vars:
+    mosq_manage_service: false
+  roles:
+    - role: mosquitto

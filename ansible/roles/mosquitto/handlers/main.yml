@@ -1,0 +1,12 @@
+---
+- name: Restart mosquitto
+  ansible.builtin.systemd:
+    name: mosquitto.service
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  become: true
+  when:
+    - not ansible_check_mode
+    - not (mosq_rehearsal_mode | default(false) | bool)
+    - mosq_manage_service | default(false) | bool
