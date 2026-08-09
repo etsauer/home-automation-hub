@@ -140,9 +140,17 @@
         - not ansible_check_mode
       ansible.builtin.shell: |
         set -euo pipefail
+        # Drop only legacy entries; keep the Ansible-managed pair:
+        #   #Ansible: frigate storage monitor
+        #   */15 ... frigate-storage-monitor.sh
         tmp="$(mktemp)"
-        if crontab -l 2>/dev/null | grep -q 'frigate-storage-monitor\.sh'; then
-          crontab -l 2>/dev/null | grep -v 'frigate-storage-monitor\.sh' >"$tmp" || true
+        if crontab -l 2>/dev/null | awk '
+          /^#Ansible: frigate storage monitor$/ { keep=1; print; next }
+          keep && /frigate-storage-monitor\.sh/ { keep=0; print; next }
+          /frigate-storage-monitor\.sh/ { removed=1; next }
+          { print }
+          END { exit removed ? 0 : 1 }
+        ' >"$tmp"; then
           crontab "$tmp"
           echo changed
         else
