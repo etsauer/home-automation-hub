@@ -125,42 +125,18 @@
         backup: true
 
     - name: Ensure storage monitor log file exists
+      ansible.builtin.stat:
+        path: "{{ frigate_monitor_log_path }}"
+      register: frigate_monitor_log_stat
+
+    - name: Create storage monitor log file when missing
+      when: not frigate_monitor_log_stat.stat.exists
       ansible.builtin.file:
         path: "{{ frigate_monitor_log_path }}"
         state: touch
         owner: "{{ frigate_owner }}"
         group: "{{ frigate_group }}"
         mode: "0644"
-        modification_time: preserve
-        access_time: preserve
-
-    - name: Remove unmanaged frigate storage monitor cron lines
-      when:
-        - not frigate_rehearsal_mode | bool
-        - not ansible_check_mode
-      ansible.builtin.shell: |
-        set -euo pipefail
-        # Drop only legacy entries; keep the Ansible-managed pair:
-        #   #Ansible: frigate storage monitor
-        #   */15 ... frigate-storage-monitor.sh
-        tmp="$(mktemp)"
-        if crontab -l 2>/dev/null | awk '
-          /^#Ansible: frigate storage monitor$/ { keep=1; print; next }
-          keep && /frigate-storage-monitor\.sh/ { keep=0; print; next }
-          /frigate-storage-monitor\.sh/ { removed=1; next }
-          { print }
-          END { exit removed ? 0 : 1 }
-        ' >"$tmp"; then
-          crontab "$tmp"
-          echo changed
-        else
-          echo unchanged
-        fi
-        rm -f "$tmp"
-      args:
-        executable: /bin/bash
-      register: frigate_cron_cleanup
-      changed_when: "'changed' in frigate_cron_cleanup.stdout"
 
     - name: Install storage monitor cron job
       when: not frigate_rehearsal_mode | bool
