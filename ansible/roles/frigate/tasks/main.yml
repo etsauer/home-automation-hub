@@ -14,6 +14,23 @@
       Set frigate_rtsp_password (not REPLACE_ME/REDACT_ME) in
       group_vars/all/secrets.yml before deploying frigate.
 
+- name: Validate Frigate storage monitor secrets
+  when: frigate_manage_storage_monitor | bool
+  ansible.builtin.assert:
+    that:
+      - ha_url is defined
+      - ha_url | length > 0
+      - ha_url != "REPLACE_ME"
+      - ha_notify_service is defined
+      - ha_notify_service | length > 0
+      - ha_notify_service != "REPLACE_ME"
+      - ha_bearer_token is defined
+      - ha_bearer_token | length > 0
+      - ha_bearer_token != "REPLACE_ME"
+    fail_msg: >-
+      Set ha_url, ha_notify_service, and ha_bearer_token in
+      group_vars/all/secrets.yml for the Frigate storage monitor.
+
 - name: Ensure Frigate config directory exists
   ansible.builtin.file:
     path: "{{ frigate_config_dir }}"
@@ -85,3 +102,63 @@
     - not frigate_rehearsal_mode | bool
     - frigate_manage_service | bool
   ansible.builtin.meta: flush_handlers
+
+- name: Deploy Frigate storage monitor
+  when: frigate_manage_storage_monitor | bool
+  block:
+    - name: Deploy storage monitor script
+      ansible.builtin.template:
+        src: frigate-storage-monitor.sh.j2
+        dest: "{{ frigate_monitor_script_path }}"
+        owner: "{{ frigate_owner }}"
+        group: "{{ frigate_group }}"
+        mode: "0755"
+        backup: true
+
+    - name: Deploy storage monitor environment file
+      ansible.builtin.template:
+        src: frigate-monitor.env.j2
+        dest: "{{ frigate_monitor_env_path }}"
+        owner: "{{ frigate_owner }}"
+        group: "{{ frigate_group }}"
+        mode: "0600"
+        backup: true
+
+    - name: Ensure storage monitor log file exists
+      ansible.builtin.file:
+        path: "{{ frigate_monitor_log_path }}"
+        state: touch
+        owner: "{{ frigate_owner }}"
+        group: "{{ frigate_group }}"
+        mode: "0644"
+        modification_time: preserve
+        access_time: preserve
+
+    - name: Remove unmanaged frigate storage monitor cron lines
+      when:
+        - not frigate_rehearsal_mode | bool
+        - not ansible_check_mode
+      ansible.builtin.shell: |
+        set -euo pipefail
+        tmp="$(mktemp)"
+        if crontab -l 2>/dev/null | grep -q 'frigate-storage-monitor\.sh'; then
+          crontab -l 2>/dev/null | grep -v 'frigate-storage-monitor\.sh' >"$tmp" || true
+          crontab "$tmp"
+          echo changed
+        else
+          echo unchanged
+        fi
+        rm -f "$tmp"
+      args:
+        executable: /bin/bash
+      register: frigate_cron_cleanup
+      changed_when: "'changed' in frigate_cron_cleanup.stdout"
+
+    - name: Install storage monitor cron job
+      when: not frigate_rehearsal_mode | bool
+      ansible.builtin.cron:
+        name: frigate storage monitor
+        user: root
+        minute: "{{ frigate_monitor_cron_minute }}"
+        job: "{{ frigate_monitor_script_path }} >/dev/null 2>&1"
+        state: present

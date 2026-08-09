@@ -16,3 +16,11 @@ frigate_rehearsal_mode: false
 frigate_manage_service: false
 # FRIGATE_RTSP_PASSWORD comes from group_vars/all/secrets.yml (frigate_rtsp_password).
 # Frigate YAML under frigate_config_dir is NOT managed by this role.
+
+# Storage monitor (cron + HA notify) — matches live Pi layout
+frigate_manage_storage_monitor: true
+frigate_monitor_script_path: /usr/local/bin/frigate-storage-monitor.sh
+frigate_monitor_env_path: /etc/frigate-monitor.env
+frigate_monitor_log_path: /var/log/frigate_storage_alert.log
+frigate_monitor_threshold: 75
+frigate_monitor_cron_minute: "*/15"

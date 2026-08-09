@@ -1,7 +1,8 @@
 # frigate role
 
-Deploys the Frigate Podman Quadlet unit. **Does not manage** `config.yaml` or
-other files under the config directory — those live on the host.
+Deploys the Frigate Podman Quadlet unit and the storage-capacity monitor.
+**Does not manage** `config.yaml` or other files under the config directory —
+those live on the host.
 
 ## Current shape (matches pre-incident Pi unit)
 
@@ -13,18 +14,31 @@ other files under the config directory — those live on the host.
   - `/opt/frigate/config` → `/config:Z`
   - `/mnt/lacie/frigate_media` → `/media/frigate:Z`
 
+## Storage monitor
+
+When `frigate_manage_storage_monitor` is true (default):
+
+- Script: `/usr/local/bin/frigate-storage-monitor.sh`
+- Env (mode `0600`): `/etc/frigate-monitor.env`
+- Root cron every 15 minutes
+- On threshold breach, notifies Home Assistant via
+  `notify.<ha_notify_service>` using `ha_bearer_token`
+
+Required secrets: `ha_url`, `ha_notify_service`, `ha_bearer_token`.
+
 ## Safety
 
-- Default is write-only (`frigate_manage_service: false`)
+- Default Quadlet apply is write-only (`frigate_manage_service: false`)
 - Asserts recovered `config.yaml` exists and is non-empty
 - Asserts `/dev/hailo0` exists before deploy (non-rehearsal)
-- Never templates over `config.yaml` (skeleton config template removed)
+- Never templates over `config.yaml`
 
 ## Variables of interest
 
 - `frigate_config_dir` / `frigate_media_dir` / `frigate_image`
 - `frigate_rtsp_password` (required secret)
 - `frigate_manage_service` / `frigate_rehearsal_mode`
+- `frigate_manage_storage_monitor` / `frigate_monitor_threshold`
 
 ## Future work
 

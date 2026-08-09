@@ -22,9 +22,19 @@
           - frigate_rtsp_password | length > 0
           - frigate_rtsp_password != "REPLACE_ME"
           - frigate_rtsp_password != "REDACT_ME"
+          - ha_url is defined
+          - ha_url | length > 0
+          - ha_url != "REPLACE_ME"
+          - ha_notify_service is defined
+          - ha_notify_service | length > 0
+          - ha_notify_service != "REPLACE_ME"
+          - ha_bearer_token is defined
+          - ha_bearer_token | length > 0
+          - ha_bearer_token != "REPLACE_ME"
         fail_msg: >-
-          Define gd_key, gd_secret, and frigate_rtsp_password in
-          group_vars/all/secrets.yml before running site.yml.
+          Define gd_key, gd_secret, frigate_rtsp_password, ha_url,
+          ha_notify_service, and ha_bearer_token in group_vars/all/secrets.yml
+          before running site.yml.
   roles:
     # Runtime prerequisite (package only — no podman.socket)
     - role: podman

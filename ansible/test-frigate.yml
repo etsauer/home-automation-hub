@@ -11,8 +11,14 @@
     frigate_config_dir: "{{ playbook_dir }}/.rehearsal/opt/frigate/config"
     frigate_media_dir: "{{ playbook_dir }}/.rehearsal/mnt/lacie/frigate_media"
     frigate_systemd_dir: "{{ playbook_dir }}/.rehearsal/etc/containers/systemd"
-    # Placeholder for local template rendering only — not a real secret.
+    frigate_monitor_script_path: "{{ playbook_dir }}/.rehearsal/usr/local/bin/frigate-storage-monitor.sh"
+    frigate_monitor_env_path: "{{ playbook_dir }}/.rehearsal/etc/frigate-monitor.env"
+    frigate_monitor_log_path: "{{ playbook_dir }}/.rehearsal/var/log/frigate_storage_alert.log"
+    # Placeholders for local template rendering only — not real secrets.
     frigate_rtsp_password: rehearsal-rtsp
+    ha_url: http://127.0.0.1:8123
+    ha_notify_service: mobile_app_rehearsal
+    ha_bearer_token: rehearsal-token
   pre_tasks:
     - name: Ensure rehearsal paths exist for seed files
       ansible.builtin.file:
@@ -23,6 +29,9 @@
         - "{{ frigate_config_dir }}"
         - "{{ frigate_media_dir }}"
         - "{{ frigate_systemd_dir }}"
+        - "{{ frigate_monitor_script_path | dirname }}"
+        - "{{ frigate_monitor_env_path | dirname }}"
+        - "{{ frigate_monitor_log_path | dirname }}"
 
     - name: Seed rehearsal config.yaml
       ansible.builtin.copy:
