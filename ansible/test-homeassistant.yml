@@ -1,0 +1,40 @@
+---
+- name: Rehearse the Home Assistant role locally
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: false
+  vars:
+    ha_rehearsal_mode: true
+    ha_owner: "{{ ansible_facts['user_id'] }}"
+    ha_group: "{{ ansible_facts['user_gid'] }}"
+    ha_config_dir: "{{ playbook_dir }}/.rehearsal/opt/homeassistant/config"
+    ha_db_mount: "{{ playbook_dir }}/.rehearsal/mnt/lacie/ha_db"
+    ha_db_file: "{{ playbook_dir }}/.rehearsal/mnt/lacie/ha_db/home-assistant_v2.db"
+    ha_systemd_dir: "{{ playbook_dir }}/.rehearsal/etc/containers/systemd"
+  pre_tasks:
+    - name: Ensure rehearsal paths exist for seed files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ ha_config_dir }}"
+        - "{{ ha_db_file | dirname }}"
+        - "{{ ha_systemd_dir }}"
+
+    - name: Seed rehearsal configuration.yaml
+      ansible.builtin.copy:
+        dest: "{{ ha_config_dir }}/configuration.yaml"
+        content: |
+          # rehearsal stub — not deployed to the Pi
+          default_config:
+        mode: "0644"
+
+    - name: Seed rehearsal DB file
+      ansible.builtin.copy:
+        dest: "{{ ha_db_file }}"
+        content: "rehearsal-db"
+        mode: "0644"
+  roles:
+    - role: homeassistant

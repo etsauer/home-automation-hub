@@ -1,0 +1,19 @@
+---
+# Recover / redeploy Home Assistant Quadlet only.
+# Default is write-only: updates homeassistant.container with backups,
+# and does NOT daemon-reload, enable, or restart the service.
+# Does NOT touch configuration.yaml or other files under /opt/homeassistant/config.
+#
+# After reviewing the unit on the Pi, cut over with:
+#   ansible-playbook -i ansible/hosts ansible/fix-homeassistant.yml -e ha_manage_service=true
+#
+# Preview first:
+#   ansible-playbook -i ansible/hosts ansible/fix-homeassistant.yml --check --diff
+- name: Fix Home Assistant on the Pi (write-only by default)
+  hosts: pi
+  become: true
+  gather_facts: true
+  vars:
+    ha_manage_service: false
+  roles:
+    - role: homeassistant

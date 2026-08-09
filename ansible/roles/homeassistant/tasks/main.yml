@@ -1,0 +1,90 @@
+---
+- name: Validate Home Assistant configuration values
+  ansible.builtin.assert:
+    that:
+      - ha_image is defined
+      - ha_image | length > 0
+      - ha_config_dir is defined
+      - ha_config_dir | length > 0
+      - ha_db_file is defined
+      - ha_db_file | length > 0
+      - ha_publish_port is defined
+      - ha_timezone is defined
+      - ha_timezone | length > 0
+    fail_msg: >-
+      Set ha_image, ha_config_dir, ha_db_file, ha_publish_port, and ha_timezone
+      before deploying homeassistant.
+
+- name: Ensure Home Assistant config directory exists
+  ansible.builtin.file:
+    path: "{{ ha_config_dir }}"
+    state: directory
+    owner: "{{ ha_owner }}"
+    group: "{{ ha_group }}"
+    mode: "0755"
+
+- name: Ensure Home Assistant DB parent directory exists
+  # Do not force owner/group — /mnt/lacie/ha_db is shared storage with existing perms.
+  ansible.builtin.file:
+    path: "{{ ha_db_file | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Ensure Home Assistant systemd directory exists
+  ansible.builtin.file:
+    path: "{{ ha_systemd_dir }}"
+    state: directory
+    owner: "{{ ha_owner }}"
+    group: "{{ ha_group }}"
+    mode: "0755"
+
+- name: Require recovered configuration.yaml (do not overwrite)
+  ansible.builtin.stat:
+    path: "{{ ha_config_dir }}/configuration.yaml"
+  register: ha_configuration_yaml
+
+- name: Assert configuration.yaml is present and non-empty
+  ansible.builtin.assert:
+    that:
+      - ha_configuration_yaml.stat.exists
+      - ha_configuration_yaml.stat.isreg
+      - ha_configuration_yaml.stat.size | int > 0
+    fail_msg: >-
+      {{ ha_config_dir }}/configuration.yaml is missing or empty.
+      Restore the live Home Assistant config before deploying this role.
+      This role intentionally does not write configuration.yaml.
+
+- name: Require external recorder DB file
+  when: not ha_rehearsal_mode | bool
+  block:
+    - name: Stat Home Assistant DB file
+      ansible.builtin.stat:
+        path: "{{ ha_db_file }}"
+      register: ha_db_stat
+
+    - name: Assert Home Assistant DB file exists
+      ansible.builtin.assert:
+        that:
+          - ha_db_stat.stat.exists
+          - ha_db_stat.stat.isreg
+          - ha_db_stat.stat.size | int > 0
+        fail_msg: >-
+          {{ ha_db_file }} is missing or empty. The Quadlet bind-mounts this
+          file into the container; restore it before cutover.
+
+- name: Deploy homeassistant container systemd unit
+  ansible.builtin.template:
+    src: homeassistant.container.j2
+    dest: "{{ ha_systemd_dir }}/homeassistant.container"
+    owner: "{{ ha_owner }}"
+    group: "{{ ha_group }}"
+    mode: "0644"
+    backup: true
+  notify: Restart homeassistant
+
+- name: Apply notified homeassistant service changes
+  when:
+    - not ansible_check_mode
+    - not ha_rehearsal_mode | bool
+    - ha_manage_service | bool
+  ansible.builtin.meta: flush_handlers
