@@ -1,0 +1,40 @@
+#!/bin/bash
+# Managed by Ansible — frigate role storage monitor
+set -euo pipefail
+
+ENV_FILE="{{ frigate_monitor_env_path }}"
+TARGET_DIR="{{ frigate_media_dir }}"
+THRESHOLD={{ frigate_monitor_threshold }}
+NOTIFICATION_LOG="{{ frigate_monitor_log_path }}"
+
+if [ -f "$ENV_FILE" ]; then
+    # shellcheck disable=SC1090
+    source "$ENV_FILE"
+else
+    echo "CRITICAL: Environment file missing: $ENV_FILE" >> "$NOTIFICATION_LOG"
+    exit 1
+fi
+
+CURRENT_USAGE=$(df -P "$TARGET_DIR" | awk 'NR==2 {print $5}' | tr -d '%')
+TIMESTAMP=$(date "+%Y-%m-%d %H:%M:%S")
+
+if [ "${CURRENT_USAGE:-0}" -gt "$THRESHOLD" ]; then
+    MSG="CRITICAL: Frigate storage at $TARGET_DIR is at ${CURRENT_USAGE}% capacity!"
+    echo "[$TIMESTAMP] $MSG" >> "$NOTIFICATION_LOG"
+
+    curl -sS -X POST \
+      -H "Authorization: Bearer ${FRIGATE_BEARER_TOKEN}" \
+      -H "Content-Type: application/json" \
+      -d "{
+            \"message\": \"$MSG\",
+            \"data\": {
+              \"ttl\": 0,
+              \"priority\": \"high\"
+            }
+          }" \
+      "${HA_URL}/api/services/notify/${HA_PHONE_SERVICE}" \
+      >/dev/null || echo "[$TIMESTAMP] WARN: Home Assistant notify failed" >> "$NOTIFICATION_LOG"
+else
+    MSG="INFO: Frigate storage at $TARGET_DIR is at ${CURRENT_USAGE}% capacity."
+    echo "[$TIMESTAMP] $MSG" >> "$NOTIFICATION_LOG"
+fi
