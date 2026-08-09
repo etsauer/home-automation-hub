@@ -1,0 +1,41 @@
+---
+- name: Remote inventory collection
+  hosts: pi
+  become: yes
+  gather_facts: no
+
+  tasks:
+    - name: Ensure scripts dir exists on remote
+      file:
+        path: /tmp/ansible-inventory-scripts
+        state: directory
+        mode: '0755'
+
+    - name: Copy inventory script to remote
+      copy:
+        src: scripts/collect_inventory.sh
+        dest: /tmp/ansible-inventory-scripts/collect_inventory.sh
+        mode: '0755'
+
+    - name: Run inventory script
+      command: /tmp/ansible-inventory-scripts/collect_inventory.sh
+      register: inventory_run
+      ignore_errors: yes
+
+    - name: Find produced tarball
+      find:
+        paths: /tmp
+        patterns: "pi-inventory-*.tar.gz"
+        recurse: no
+      register: found_tarballs
+
+    - name: Fail if no tarball found
+      fail:
+        msg: "No inventory tarball found on remote. See output: {{ inventory_run.stdout }}"
+      when: found_tarballs.matched == 0
+
+    - name: Fetch latest tarball
+      fetch:
+        src: "{{ (found_tarballs.files | sort(attribute='mtime'))[-1].path }}"
+        dest: "ansible/collected/"
+        flat: yes
