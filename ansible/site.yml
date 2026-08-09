@@ -26,7 +26,10 @@
           Define gd_key, gd_secret, and frigate_rtsp_password in
           group_vars/all/secrets.yml before running site.yml.
   roles:
-    # Validated / enabled
+    # Runtime prerequisite (package only — no podman.socket)
+    - role: podman
+
+    # Validated / enabled application services
     - role: caddy
       vars:
         caddy_manage_service: true
@@ -42,6 +45,3 @@
     - role: frigate
       vars:
         frigate_manage_service: true
-
-    # Not yet recovered — do not enable until fix-* cutover is known-good:
-    # - role: podman

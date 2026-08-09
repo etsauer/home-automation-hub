@@ -1,0 +1,44 @@
+---
+- name: Validate Podman configuration values
+  ansible.builtin.assert:
+    that:
+      - podman_packages is defined
+      - podman_packages | length > 0
+    fail_msg: Set podman_packages to a non-empty list before deploying podman.
+
+- name: Ensure Podman packages are installed
+  when: not podman_rehearsal_mode | bool
+  ansible.builtin.package:
+    name: "{{ podman_packages }}"
+    state: present
+
+- name: Ensure optional Podman management user exists
+  when:
+    - not podman_rehearsal_mode | bool
+    - podman_user is defined
+    - podman_user | length > 0
+  ansible.builtin.user:
+    name: "{{ podman_user }}"
+    state: present
+
+- name: Verify Podman CLI is available
+  when: not podman_rehearsal_mode | bool
+  ansible.builtin.command: podman --version
+  register: podman_version
+  changed_when: false
+  check_mode: false
+
+- name: Verify Quadlet generator is present
+  when: not podman_rehearsal_mode | bool
+  ansible.builtin.stat:
+    path: /usr/lib/systemd/system-generators/podman-system-generator
+  register: podman_generator
+
+- name: Assert Quadlet generator exists
+  when: not podman_rehearsal_mode | bool
+  ansible.builtin.assert:
+    that:
+      - podman_generator.stat.exists
+    fail_msg: >-
+      podman-system-generator is missing. Quadlet units under
+      /etc/containers/systemd will not be generated.

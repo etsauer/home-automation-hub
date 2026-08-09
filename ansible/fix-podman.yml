@@ -1,0 +1,12 @@
+---
+# Ensure Podman package + Quadlet generator on the Pi.
+# Idempotent prerequisite — does not manage podman.socket or app containers.
+#
+# Preview:
+#   ansible-playbook -i ansible/hosts ansible/fix-podman.yml --check --diff
+- name: Fix / ensure Podman on the Pi
+  hosts: pi
+  become: true
+  gather_facts: true
+  roles:
+    - role: podman
