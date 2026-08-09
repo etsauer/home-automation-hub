@@ -18,9 +18,13 @@
           - gd_secret is defined
           - gd_secret | length > 0
           - gd_secret != "REPLACE_ME"
+          - frigate_rtsp_password is defined
+          - frigate_rtsp_password | length > 0
+          - frigate_rtsp_password != "REPLACE_ME"
+          - frigate_rtsp_password != "REDACT_ME"
         fail_msg: >-
-          Define gd_key and gd_secret in group_vars/all/secrets.yml before
-          running site.yml (required by godaddy_ddns).
+          Define gd_key, gd_secret, and frigate_rtsp_password in
+          group_vars/all/secrets.yml before running site.yml.
   roles:
     # Validated / enabled
     - role: caddy
@@ -35,7 +39,9 @@
     - role: homeassistant
       vars:
         ha_manage_service: true
+    - role: frigate
+      vars:
+        frigate_manage_service: true
 
     # Not yet recovered — do not enable until fix-* cutover is known-good:
     # - role: podman
-    # - role: frigate

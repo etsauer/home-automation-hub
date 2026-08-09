@@ -1,0 +1,18 @@
+---
+# frigate defaults (matches pre-incident Pi Quadlet)
+frigate_config_dir: /opt/frigate/config
+frigate_config_file: "{{ frigate_config_dir }}/config.yaml"
+frigate_media_dir: /mnt/lacie/frigate_media
+frigate_image: ghcr.io/blakeblackshear/frigate:stable
+frigate_container_name: frigate
+frigate_shm_size: 256mb
+frigate_hailo_device: /dev/hailo0
+frigate_usb_device: /dev/bus/usb
+frigate_systemd_dir: /etc/containers/systemd
+frigate_owner: root
+frigate_group: root
+frigate_rehearsal_mode: false
+# When false: write .container only (with backups). No daemon-reload/restart.
+frigate_manage_service: false
+# FRIGATE_RTSP_PASSWORD comes from group_vars/all/secrets.yml (frigate_rtsp_password).
+# Frigate YAML under frigate_config_dir is NOT managed by this role.

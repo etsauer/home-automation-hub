@@ -1,0 +1,12 @@
+---
+- name: Restart frigate
+  ansible.builtin.systemd:
+    name: frigate.service
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  become: true
+  when:
+    - not ansible_check_mode
+    - not (frigate_rehearsal_mode | default(false) | bool)
+    - frigate_manage_service | default(false) | bool

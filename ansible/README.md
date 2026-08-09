@@ -21,6 +21,7 @@ For local validation of a role or template, use a rehearsal playbook instead of 
 - [ansible/test-godaddy-ddns.yml](test-godaddy-ddns.yml)
 - [ansible/test-mosquitto.yml](test-mosquitto.yml)
 - [ansible/test-homeassistant.yml](test-homeassistant.yml)
+- [ansible/test-frigate.yml](test-frigate.yml)
 
 These playbooks run locally against `localhost`, use temporary paths inside the repository, and skip real systemd/service activation so they do not modify the host machine.
 
@@ -58,6 +59,7 @@ While catching up to live server state, single-role fix playbooks are useful:
 - [ansible/fix-godaddy-ddns.yml](fix-godaddy-ddns.yml)
 - [ansible/fix-mosquitto.yml](fix-mosquitto.yml)
 - [ansible/fix-homeassistant.yml](fix-homeassistant.yml)
+- [ansible/fix-frigate.yml](fix-frigate.yml)
 
 These default to write-only (`*_manage_service=false`) with Ansible backups.
 They are temporary necessities — fold each service into `site.yml` once cutover
