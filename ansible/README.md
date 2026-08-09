@@ -1,15 +1,4 @@
-# Ansible inventory collection and safe testing guide
-
-## Inventory collection
-
-Usage:
-
-1. Edit [ansible/hosts](hosts) and set the Pi host IP and user.
-2. Ensure SSH key or passwordless access for the ansible_user.
-3. Run:
-   ansible-playbook -i ansible/hosts ansible/collect_inventory.yml
-
-Collected tarball will be placed in [ansible/collected](collected/).
+# Ansible safe testing and deployment guide
 
 ## Safe testing workflow
 
@@ -86,7 +75,7 @@ It targets `pi` with `check_mode: true` and **refuses** to run if check mode is 
 ## Security
 
 - Do not store unencrypted secrets in this repo.
-- The inventory collection workflow and extracted inventory are temporary operational artifacts. Keep them out of the final deployment repo state.
+- Do not commit local dumps under `extracted/`, `collected/`, or `.rehearsal/` — they may contain secrets.
 
 ## Secrets management (recommended)
 
@@ -103,5 +92,3 @@ It targets `pi` with `check_mode: true` and **refuses** to run if check mode is 
   3. Decrypt for use at runtime: "sops --decrypt secrets.yml.enc > secrets.yml"
 - If using Ansible Vault:
   ansible-vault create group_vars/all/vault.yml
-
-Do NOT commit [ansible/extracted](extracted/) or collected tarballs; these are temporary and may contain secrets.
