@@ -46,4 +46,4 @@ flowchart LR
 ansible-playbook -i ansible/hosts ansible/site.yml
 ```
 
-Only roles that have been validated against the live host are enabled in `site.yml`. Details for rehearsal, secrets, and inventory collection live in [`ansible/README.md`](ansible/README.md).
+Only roles that have been validated against the live host are enabled in `site.yml`. Details for rehearsal and secrets live in [`ansible/README.md`](ansible/README.md).

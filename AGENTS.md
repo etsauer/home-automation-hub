@@ -13,7 +13,7 @@ automation / security hub. The long-term single entrypoint is
 
 - Do **not** commit secrets, inventory dumps, or rehearsal output:
   - `ansible/group_vars/all/secrets.yml` (gitignored)
-  - `ansible/extracted/`, collected tarballs, `.rehearsal/`, `.ansible-tmp/`
+  - `ansible/extracted/`, `ansible/collected/`, `.rehearsal/`, `.ansible-tmp/`
 - Do **not** paste API keys, PATs, or passwords into commits, PRs, or handoffs.
 - Do **not** enable an unvalidated role in `site.yml`. Skeleton / unrecovered
   roles can overwrite live configs and leave Quadlet “zombie” units
