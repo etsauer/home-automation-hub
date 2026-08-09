@@ -1,0 +1,17 @@
+---
+# homeassistant defaults (matches pre-incident Pi Quadlet)
+ha_config_dir: /opt/homeassistant/config
+ha_db_mount: /mnt/lacie/ha_db
+ha_db_file: "{{ ha_db_mount }}/home-assistant_v2.db"
+ha_image: ghcr.io/home-assistant/home-assistant:stable
+ha_container_name: homeassistant
+ha_publish_port: 8123
+ha_timezone: US/Eastern
+ha_systemd_dir: /etc/containers/systemd
+ha_owner: root
+ha_group: root
+ha_rehearsal_mode: false
+# When false: write .container only (with backups). No daemon-reload/restart.
+ha_manage_service: false
+# Home Assistant YAML under ha_config_dir is NOT managed by this role.
+# It was recovered on the live host and must not be overwritten by skeletons.

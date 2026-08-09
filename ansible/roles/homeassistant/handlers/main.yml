@@ -1,0 +1,12 @@
+---
+- name: Restart homeassistant
+  ansible.builtin.systemd:
+    name: homeassistant.service
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  become: true
+  when:
+    - not ansible_check_mode
+    - not (ha_rehearsal_mode | default(false) | bool)
+    - ha_manage_service | default(false) | bool

@@ -32,8 +32,10 @@
     - role: mosquitto
       vars:
         mosq_manage_service: true
+    - role: homeassistant
+      vars:
+        ha_manage_service: true
 
     # Not yet recovered — do not enable until fix-* cutover is known-good:
     # - role: podman
     # - role: frigate
-    # - role: homeassistant

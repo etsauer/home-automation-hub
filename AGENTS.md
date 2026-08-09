@@ -53,8 +53,9 @@ automation / security hub. The long-term single entrypoint is
 - `caddy`
 - `godaddy_ddns`
 - `mosquitto`
+- `homeassistant`
 
-Still unrecovered / not enabled: `podman`, `frigate`, `homeassistant`.
+Still unrecovered / not enabled: `podman`, `frigate`.
 
 ## Secrets
 

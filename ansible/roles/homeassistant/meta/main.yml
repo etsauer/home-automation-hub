@@ -1,0 +1,4 @@
+---
+# homeassistant role metadata
+# Intentionally no podman role dependency: recovery playbooks must not pull in
+# unrelated roles. Podman is assumed already present on the Pi.
