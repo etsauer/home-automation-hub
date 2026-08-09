@@ -1,0 +1,23 @@
+---
+# Recover / redeploy Frigate Quadlet only.
+# Default is write-only: updates frigate.container with backups,
+# and does NOT daemon-reload, enable, or restart the service.
+# Does NOT touch config.yaml or other files under /opt/frigate/config.
+#
+# Requires frigate_rtsp_password in group_vars/all/secrets.yml.
+#
+# After reviewing the unit on the Pi, cut over with:
+#   ansible-playbook -i ansible/hosts ansible/fix-frigate.yml -e frigate_manage_service=true
+#
+# Preview first:
+#   ansible-playbook -i ansible/hosts ansible/fix-frigate.yml --check --diff
+- name: Fix Frigate on the Pi (write-only by default)
+  hosts: pi
+  become: true
+  gather_facts: true
+  vars_files:
+    - group_vars/all/secrets.yml
+  vars:
+    frigate_manage_service: false
+  roles:
+    - role: frigate

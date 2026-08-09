@@ -1,0 +1,37 @@
+---
+- name: Rehearse the Frigate role locally
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: false
+  vars:
+    frigate_rehearsal_mode: true
+    frigate_owner: "{{ ansible_facts['user_id'] }}"
+    frigate_group: "{{ ansible_facts['user_gid'] }}"
+    frigate_config_dir: "{{ playbook_dir }}/.rehearsal/opt/frigate/config"
+    frigate_media_dir: "{{ playbook_dir }}/.rehearsal/mnt/lacie/frigate_media"
+    frigate_systemd_dir: "{{ playbook_dir }}/.rehearsal/etc/containers/systemd"
+    # Placeholder for local template rendering only — not a real secret.
+    frigate_rtsp_password: rehearsal-rtsp
+  pre_tasks:
+    - name: Ensure rehearsal paths exist for seed files
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ frigate_config_dir }}"
+        - "{{ frigate_media_dir }}"
+        - "{{ frigate_systemd_dir }}"
+
+    - name: Seed rehearsal config.yaml
+      ansible.builtin.copy:
+        dest: "{{ frigate_config_dir }}/config.yaml"
+        content: |
+          # rehearsal stub — not deployed to the Pi
+          mqtt:
+            enabled: false
+          cameras: {}
+        mode: "0644"
+  roles:
+    - role: frigate

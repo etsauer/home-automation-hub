@@ -1,0 +1,87 @@
+---
+- name: Validate Frigate configuration values
+  ansible.builtin.assert:
+    that:
+      - frigate_image is defined
+      - frigate_image | length > 0
+      - frigate_config_dir is defined
+      - frigate_media_dir is defined
+      - frigate_rtsp_password is defined
+      - frigate_rtsp_password | length > 0
+      - frigate_rtsp_password != "REPLACE_ME"
+      - frigate_rtsp_password != "REDACT_ME"
+    fail_msg: >-
+      Set frigate_rtsp_password (not REPLACE_ME/REDACT_ME) in
+      group_vars/all/secrets.yml before deploying frigate.
+
+- name: Ensure Frigate config directory exists
+  ansible.builtin.file:
+    path: "{{ frigate_config_dir }}"
+    state: directory
+    owner: "{{ frigate_owner }}"
+    group: "{{ frigate_group }}"
+    mode: "0755"
+
+- name: Ensure Frigate media directory exists
+  # Do not force owner/group — /mnt/lacie/frigate_media is shared storage.
+  ansible.builtin.file:
+    path: "{{ frigate_media_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Ensure Frigate systemd directory exists
+  ansible.builtin.file:
+    path: "{{ frigate_systemd_dir }}"
+    state: directory
+    owner: "{{ frigate_owner }}"
+    group: "{{ frigate_group }}"
+    mode: "0755"
+
+- name: Require recovered Frigate config.yaml (do not overwrite)
+  ansible.builtin.stat:
+    path: "{{ frigate_config_file }}"
+  register: frigate_config_stat
+
+- name: Assert config.yaml is present and non-empty
+  ansible.builtin.assert:
+    that:
+      - frigate_config_stat.stat.exists
+      - frigate_config_stat.stat.isreg
+      - frigate_config_stat.stat.size | int > 0
+    fail_msg: >-
+      {{ frigate_config_file }} is missing or empty.
+      Restore the live Frigate config before deploying this role.
+      This role intentionally does not write config.yaml.
+
+- name: Require accelerator and media path on the Pi
+  when: not frigate_rehearsal_mode | bool
+  block:
+    - name: Stat Hailo device
+      ansible.builtin.stat:
+        path: "{{ frigate_hailo_device }}"
+      register: frigate_hailo_stat
+
+    - name: Assert Hailo device exists
+      ansible.builtin.assert:
+        that:
+          - frigate_hailo_stat.stat.exists
+        fail_msg: >-
+          {{ frigate_hailo_device }} is missing. Frigate cutover requires the
+          Hailo accelerator device present on the host.
+
+- name: Deploy frigate container systemd unit
+  ansible.builtin.template:
+    src: frigate.container.j2
+    dest: "{{ frigate_systemd_dir }}/frigate.container"
+    owner: "{{ frigate_owner }}"
+    group: "{{ frigate_group }}"
+    mode: "0644"
+    backup: true
+  notify: Restart frigate
+
+- name: Apply notified frigate service changes
+  when:
+    - not ansible_check_mode
+    - not frigate_rehearsal_mode | bool
+    - frigate_manage_service | bool
+  ansible.builtin.meta: flush_handlers
