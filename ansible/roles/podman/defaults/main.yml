@@ -1,0 +1,7 @@
+---
+# podman defaults — package prerequisite for Quadlet-managed containers.
+# This hub does not use podman.socket; services are started via systemd Quadlets.
+podman_packages:
+  - podman
+podman_user: ""
+podman_rehearsal_mode: false

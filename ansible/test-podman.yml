@@ -1,0 +1,10 @@
+---
+- name: Rehearse the Podman role locally (no package install)
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: false
+  vars:
+    podman_rehearsal_mode: true
+  roles:
+    - role: podman

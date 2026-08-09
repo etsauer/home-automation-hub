@@ -1,0 +1,3 @@
+---
+# No handlers: this role does not manage podman.socket or restart the runtime.
+# Quadlet services are owned by their respective roles.

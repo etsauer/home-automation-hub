@@ -50,13 +50,12 @@ automation / security hub. The long-term single entrypoint is
 
 ## Currently enabled in `site.yml`
 
+- `podman` (package prerequisite only; does not manage `podman.socket`)
 - `caddy`
 - `godaddy_ddns`
 - `mosquitto`
 - `homeassistant`
 - `frigate`
-
-Still unrecovered / not enabled: `podman` (optional; runtime already present on the Pi).
 
 ## Secrets
 
