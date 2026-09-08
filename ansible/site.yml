@@ -1,15 +1,22 @@
 ---
 # Steady-state entrypoint for the home automation hub.
 # Only enable roles that have been validated against the live Pi.
-# Unrecovered services stay commented until their fix-* cutover is done.
+#
+# Single-service apply (does not run other roles):
+#   ansible-playbook -i ansible/hosts ansible/site.yml --tags caddy --check --diff
+# Write files without restarting a service:
+#   ansible-playbook -i ansible/hosts ansible/site.yml --tags caddy -e caddy_manage_service=false
 - name: Configure Raspberry Pi hosts
   hosts: pi
   become: true
   gather_facts: true
-  vars_files:
-    - group_vars/all/secrets.yml
   pre_tasks:
-    - name: Ensure secrets required by enabled roles are defined
+    # Tagged to match the role that needs them. `--tags coffee_site` (etc.)
+    # must not require GoDaddy/Frigate secrets. Full untagged runs still
+    # execute these before any role. group_vars/all/secrets.yml is loaded
+    # automatically when present; it is not a play-level vars_files requirement.
+    - name: Ensure GoDaddy DDNS secrets are defined
+      tags: [godaddy_ddns]
       ansible.builtin.assert:
         that:
           - gd_key is defined
@@ -18,6 +25,13 @@
           - gd_secret is defined
           - gd_secret | length > 0
           - gd_secret != "REPLACE_ME"
+        fail_msg: >-
+          Define gd_key and gd_secret in group_vars/all/secrets.yml
+          before running --tags godaddy_ddns (or a full site.yml).
+    - name: Ensure Frigate and HA-notify secrets are defined
+      tags: [frigate]
+      ansible.builtin.assert:
+        that:
           - frigate_rtsp_password is defined
           - frigate_rtsp_password | length > 0
           - frigate_rtsp_password != "REPLACE_ME"
@@ -32,26 +46,36 @@
           - ha_bearer_token | length > 0
           - ha_bearer_token != "REPLACE_ME"
         fail_msg: >-
-          Define gd_key, gd_secret, frigate_rtsp_password, ha_url,
-          ha_notify_service, and ha_bearer_token in group_vars/all/secrets.yml
-          before running site.yml.
+          Define frigate_rtsp_password, ha_url, ha_notify_service, and
+          ha_bearer_token in group_vars/all/secrets.yml before running
+          --tags frigate (or a full site.yml).
   roles:
     # Runtime prerequisite (package only — no podman.socket)
     - role: podman
+      tags: [podman]
 
     # Validated / enabled application services
     - role: caddy
+      tags: [caddy]
       vars:
         caddy_manage_service: true
     - role: godaddy_ddns
+      tags: [godaddy_ddns]
       vars:
         gd_manage_service: true
     - role: mosquitto
+      tags: [mosquitto]
       vars:
         mosq_manage_service: true
     - role: homeassistant
+      tags: [homeassistant]
       vars:
         ha_manage_service: true
     - role: frigate
+      tags: [frigate]
       vars:
         frigate_manage_service: true
+    - role: coffee_site
+      tags: [coffee_site]
+      vars:
+        coffee_site_manage_service: true

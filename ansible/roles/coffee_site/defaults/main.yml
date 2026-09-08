@@ -1,0 +1,15 @@
+---
+# coffee_site defaults
+# Image is built by etsauer/coffee-site CI and pushed to Quay.
+coffee_site_image: quay.io/etsauer/coffee-site:latest
+coffee_site_container_name: coffee-site
+# Host port is localhost-only so Caddy (later) is the public front door.
+coffee_site_publish_ip: 127.0.0.1
+coffee_site_publish_port: 8080
+coffee_site_container_port: 80
+coffee_site_systemd_dir: /etc/containers/systemd
+coffee_site_owner: root
+coffee_site_group: root
+coffee_site_rehearsal_mode: false
+# When false: write .container only (with backups). No daemon-reload, enable, or restart.
+coffee_site_manage_service: false

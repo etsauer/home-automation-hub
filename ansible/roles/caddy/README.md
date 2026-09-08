@@ -26,8 +26,13 @@ Do not mix the two: bridge mode must not use `localhost` as the upstream.
 - `caddy_image`
 - `caddy_data_volume`
 - `caddy_domain` / `caddy_upstream_host` / `caddy_upstream_port`
-- `caddy_manage_service` (default `false`: write files only)
+- `caddy_manage_service` (default `false`: write files only; `site.yml` sets `true`)
 - `caddy_rehearsal_mode`
+
+## Deploy
+
+Tag: `caddy`. Rehearse with `ansible/test-caddy.yml`. Apply with
+`ansible/site.yml --tags caddy`. Write-only: `-e caddy_manage_service=false`.
 
 ## Templates
 

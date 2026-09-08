@@ -1,0 +1,12 @@
+---
+- name: Restart coffee-site
+  ansible.builtin.systemd:
+    name: coffee-site.service
+    state: restarted
+    enabled: true
+    daemon_reload: true
+  become: true
+  when:
+    - not ansible_check_mode
+    - not (coffee_site_rehearsal_mode | default(false) | bool)
+    - coffee_site_manage_service | default(false) | bool

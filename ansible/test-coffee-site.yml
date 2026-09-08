@@ -1,0 +1,13 @@
+---
+- name: Rehearse the coffee_site role locally
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  become: false
+  vars:
+    coffee_site_rehearsal_mode: true
+    coffee_site_owner: "{{ ansible_facts['user_id'] }}"
+    coffee_site_group: "{{ ansible_facts['user_gid'] }}"
+    coffee_site_systemd_dir: "{{ playbook_dir }}/.rehearsal/etc/containers/systemd"
+  roles:
+    - role: coffee_site

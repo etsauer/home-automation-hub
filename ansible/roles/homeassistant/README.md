@@ -17,7 +17,8 @@ the host and were recovered separately.
 
 ## Safety
 
-- Default is write-only (`ha_manage_service: false`)
+- Role default is write-only (`ha_manage_service: false`); `site.yml` sets `true`
+- Apply with `ansible/site.yml --tags homeassistant`
 - Asserts that `configuration.yaml` and the external DB file exist and are
   non-empty before writing the unit
 - Never templates over `configuration.yaml` (the old skeleton task is gone)

@@ -29,8 +29,9 @@ Deploys Eclipse Mosquitto as a Podman Quadlet unit with config under
 
 ## Safety
 
-Default is write-only. Cut over after reviewing rendered files, then restart
-manually or re-run with `-e mosq_manage_service=true`.
+Role default is write-only; `site.yml` sets `mosq_manage_service: true`.
+Rehearse with `ansible/test-mosquitto.yml`. Apply with
+`ansible/site.yml --tags mosquitto`. Write-only: `-e mosq_manage_service=false`.
 
 ## Future work: MQTT authentication
 

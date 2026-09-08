@@ -30,9 +30,9 @@ in `docker.io/alpine:latest` (installs `curl`/`jq` at container start).
 
 ## Safety
 
-Default is write-only. Cut over only after reviewing the rendered script and
-`.container` on the Pi, then either restart manually or re-run with
-`-e gd_manage_service=true`.
+Role default is write-only; `site.yml` sets `gd_manage_service: true`.
+Rehearse with `ansible/test-godaddy-ddns.yml`. Apply with
+`ansible/site.yml --tags godaddy_ddns`. Write-only: `-e gd_manage_service=false`.
 
 ## Future work: PAT expiry
 

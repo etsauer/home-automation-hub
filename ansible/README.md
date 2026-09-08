@@ -12,6 +12,7 @@ For local validation of a role or template, use a rehearsal playbook instead of 
 - [ansible/test-homeassistant.yml](test-homeassistant.yml)
 - [ansible/test-frigate.yml](test-frigate.yml)
 - [ansible/test-podman.yml](test-podman.yml)
+- [ansible/test-coffee-site.yml](test-coffee-site.yml)
 
 These playbooks run locally against `localhost`, use temporary paths inside the repository, and skip real systemd/service activation so they do not modify the host machine.
 
@@ -30,7 +31,10 @@ The deployment playbooks use variables from:
 
 - [ansible/group_vars/all/secrets.yml](group_vars/all/secrets.yml)
 
-Those values should be populated from a secure secret source before any production deployment. Placeholder values are not suitable for a real deployment.
+Those values should be populated from a secure secret source before deploying
+roles that need them (`godaddy_ddns`, `frigate`). Placeholder values are not
+suitable for those roles. `--tags coffee_site` (and other roles that do not
+read secrets) can run without the GoDaddy/Frigate keys.
 
 ### Production entrypoint
 
@@ -38,31 +42,35 @@ The steady-state deployment entrypoint is:
 
 - [ansible/site.yml](site.yml)
 
-It enables only roles that have been validated against the live host. As each
-service is recovered, enable it there (see root [AGENTS.md](../AGENTS.md)).
+Roles in `site.yml` run with `*_manage_service: true`. Apply one service with
+`--tags <role>` (the tag matches the role name). Secret asserts use the same
+tags as the role that needs them (`godaddy_ddns`, `frigate`), so
+`--tags coffee_site` does not require those keys. See root
+[AGENTS.md](../AGENTS.md).
 
-### Temporary recovery playbooks (`fix-*`)
+```bash
+# Everything
+ansible-playbook -i ansible/hosts ansible/site.yml
 
-While catching up to live server state, single-role fix playbooks are useful:
+# One service
+ansible-playbook -i ansible/hosts ansible/site.yml --tags caddy --check --diff
+ansible-playbook -i ansible/hosts ansible/site.yml --tags caddy
 
-- [ansible/fix-caddy.yml](fix-caddy.yml)
-- [ansible/fix-godaddy-ddns.yml](fix-godaddy-ddns.yml)
-- [ansible/fix-mosquitto.yml](fix-mosquitto.yml)
-- [ansible/fix-homeassistant.yml](fix-homeassistant.yml)
-- [ansible/fix-frigate.yml](fix-frigate.yml)
-- [ansible/fix-podman.yml](fix-podman.yml)
+# Write files without restarting that service
+ansible-playbook -i ansible/hosts ansible/site.yml --tags caddy -e caddy_manage_service=false
+```
 
-These default to write-only (`*_manage_service=false`) with Ansible backups.
-They are temporary necessities — fold each service into `site.yml` once cutover
-is known-good, rather than treating `fix-*` as the long-term workflow.
+Available tags: `podman`, `caddy`, `godaddy_ddns`, `mosquitto`, `homeassistant`,
+`frigate`, `coffee_site`.
 
-Suggested recovery flow (per unrecovered service):
+`--tags <role>` does not run other roles (including `podman`). Use
+`--tags podman,<role>` if the runtime package also needs updating.
+
+Suggested flow for a role change:
 
 1. Rehearse locally with the matching `test-*.yml` playbook and inspect `.rehearsal/`.
-2. Preview on the Pi: `ansible-playbook -i ansible/hosts ansible/fix-<service>.yml --check --diff`
-3. Apply write-only, inspect rendered files, then cut over with
-   `-e <role>_manage_service=true` (or an equivalent deliberate restart).
-4. Enable the role in [site.yml](site.yml).
+2. Preview on the Pi: `ansible-playbook -i ansible/hosts ansible/site.yml --tags <role> --check --diff`
+3. Apply, or write-only first with `-e <role>_manage_service=false`.
 
 ### Dry-run usage
 
@@ -70,7 +78,7 @@ The check-mode playbook is:
 
 - [ansible/dry-run.yml](dry-run.yml)
 
-It targets `pi` with `check_mode: true` and **refuses** to run if check mode is not active.
+It targets `pi` with `check_mode: true` and **refuses** to run if check mode is not active. Tags work the same way as on `site.yml`.
 
 ## Security
 
