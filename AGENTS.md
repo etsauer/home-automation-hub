@@ -26,7 +26,8 @@ automation / security hub. The long-term single entrypoint is
   `*_manage_service: true`.
 - Apply one service with `--tags <role>` (role name is the tag: `caddy`,
   `godaddy_ddns`, `mosquitto`, `homeassistant`, `frigate`, `coffee_site`,
-  `podman`). Secrets asserts use the `always` tag so they still run.
+  `podman`). Secret asserts are tagged with the role that needs them
+  (`godaddy_ddns`, `frigate`), not `always`.
 - Preview: `ansible-playbook -i ansible/hosts ansible/site.yml --tags caddy --check --diff`
 - Write files without restarting: add `-e caddy_manage_service=false` (same
   pattern for other `*_manage_service` vars).
@@ -45,8 +46,14 @@ automation / security hub. The long-term single entrypoint is
 
 ## Secrets
 
-- Start from `ansible/group_vars/all/secrets.yml.example`.
-- Assert only the secrets required by **enabled** roles in `site.yml`.
+- Start from `ansible/group_vars/all/secrets.yml.example`. Ansible loads
+  `group_vars/all/secrets.yml` automatically when that file exists (inventory
+  `ansible/hosts`). Do not add a play-level `vars_files` for it — that would
+  make every tagged run require the file.
+- Assert secrets on the role that needs them (`godaddy_ddns`, `frigate`),
+  including matching `site.yml` pre_tasks so a full apply fails before writing
+  other roles. `--tags coffee_site` / `caddy` / `podman` / `mosquitto` /
+  `homeassistant` do not require those keys.
 - GoDaddy PATs expire; see future work in
   [`ansible/roles/godaddy_ddns/README.md`](ansible/roles/godaddy_ddns/README.md).
 

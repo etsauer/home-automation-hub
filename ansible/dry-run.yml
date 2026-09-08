@@ -9,8 +9,6 @@
   become: true
   gather_facts: true
   check_mode: true
-  vars_files:
-    - group_vars/all/secrets.yml
   pre_tasks:
     - name: Refuse to run unless Ansible check mode is active
       tags: always

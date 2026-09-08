@@ -10,11 +10,13 @@
   hosts: pi
   become: true
   gather_facts: true
-  vars_files:
-    - group_vars/all/secrets.yml
   pre_tasks:
-    - name: Ensure secrets required by enabled roles are defined
-      tags: always
+    # Tagged to match the role that needs them. `--tags coffee_site` (etc.)
+    # must not require GoDaddy/Frigate secrets. Full untagged runs still
+    # execute these before any role. group_vars/all/secrets.yml is loaded
+    # automatically when present; it is not a play-level vars_files requirement.
+    - name: Ensure GoDaddy DDNS secrets are defined
+      tags: [godaddy_ddns]
       ansible.builtin.assert:
         that:
           - gd_key is defined
@@ -23,6 +25,13 @@
           - gd_secret is defined
           - gd_secret | length > 0
           - gd_secret != "REPLACE_ME"
+        fail_msg: >-
+          Define gd_key and gd_secret in group_vars/all/secrets.yml
+          before running --tags godaddy_ddns (or a full site.yml).
+    - name: Ensure Frigate and HA-notify secrets are defined
+      tags: [frigate]
+      ansible.builtin.assert:
+        that:
           - frigate_rtsp_password is defined
           - frigate_rtsp_password | length > 0
           - frigate_rtsp_password != "REPLACE_ME"
@@ -37,9 +46,9 @@
           - ha_bearer_token | length > 0
           - ha_bearer_token != "REPLACE_ME"
         fail_msg: >-
-          Define gd_key, gd_secret, frigate_rtsp_password, ha_url,
-          ha_notify_service, and ha_bearer_token in group_vars/all/secrets.yml
-          before running site.yml.
+          Define frigate_rtsp_password, ha_url, ha_notify_service, and
+          ha_bearer_token in group_vars/all/secrets.yml before running
+          --tags frigate (or a full site.yml).
   roles:
     # Runtime prerequisite (package only — no podman.socket)
     - role: podman

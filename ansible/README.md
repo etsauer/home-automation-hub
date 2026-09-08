@@ -31,7 +31,10 @@ The deployment playbooks use variables from:
 
 - [ansible/group_vars/all/secrets.yml](group_vars/all/secrets.yml)
 
-Those values should be populated from a secure secret source before any production deployment. Placeholder values are not suitable for a real deployment.
+Those values should be populated from a secure secret source before deploying
+roles that need them (`godaddy_ddns`, `frigate`). Placeholder values are not
+suitable for those roles. `--tags coffee_site` (and other roles that do not
+read secrets) can run without the GoDaddy/Frigate keys.
 
 ### Production entrypoint
 
@@ -40,8 +43,10 @@ The steady-state deployment entrypoint is:
 - [ansible/site.yml](site.yml)
 
 Roles in `site.yml` run with `*_manage_service: true`. Apply one service with
-`--tags <role>` (the tag matches the role name). Secrets asserts use the
-`always` tag so they still run. See root [AGENTS.md](../AGENTS.md).
+`--tags <role>` (the tag matches the role name). Secret asserts use the same
+tags as the role that needs them (`godaddy_ddns`, `frigate`), so
+`--tags coffee_site` does not require those keys. See root
+[AGENTS.md](../AGENTS.md).
 
 ```bash
 # Everything
