@@ -57,6 +57,10 @@ automation / security hub. The long-term single entrypoint is
 - `homeassistant`
 - `frigate`
 
+`coffee_site` (mre.coffee Quadlet) is present with `test-coffee-site.yml` /
+`fix-coffee-site.yml` but is **not** enabled in `site.yml` until a known-good
+Pi cutover. Do not add it to `site.yml` from this skeleton alone.
+
 ## Secrets
 
 - Start from `ansible/group_vars/all/secrets.yml.example`.

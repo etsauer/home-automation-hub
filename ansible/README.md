@@ -12,6 +12,7 @@ For local validation of a role or template, use a rehearsal playbook instead of 
 - [ansible/test-homeassistant.yml](test-homeassistant.yml)
 - [ansible/test-frigate.yml](test-frigate.yml)
 - [ansible/test-podman.yml](test-podman.yml)
+- [ansible/test-coffee-site.yml](test-coffee-site.yml)
 
 These playbooks run locally against `localhost`, use temporary paths inside the repository, and skip real systemd/service activation so they do not modify the host machine.
 
@@ -51,6 +52,7 @@ While catching up to live server state, single-role fix playbooks are useful:
 - [ansible/fix-homeassistant.yml](fix-homeassistant.yml)
 - [ansible/fix-frigate.yml](fix-frigate.yml)
 - [ansible/fix-podman.yml](fix-podman.yml)
+- [ansible/fix-coffee-site.yml](fix-coffee-site.yml)
 
 These default to write-only (`*_manage_service=false`) with Ansible backups.
 They are temporary necessities — fold each service into `site.yml` once cutover

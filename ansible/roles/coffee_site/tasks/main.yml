@@ -1,0 +1,42 @@
+---
+- name: Validate coffee_site configuration values
+  ansible.builtin.assert:
+    that:
+      - coffee_site_image is defined
+      - coffee_site_image | length > 0
+      - "'REPLACE_ME' not in coffee_site_image"
+      - coffee_site_container_name is defined
+      - coffee_site_container_name | length > 0
+      - coffee_site_publish_ip is defined
+      - coffee_site_publish_ip | length > 0
+      - coffee_site_publish_port is defined
+      - coffee_site_container_port is defined
+      - coffee_site_systemd_dir is defined
+    fail_msg: >-
+      Set coffee_site_image, container name, localhost publish address, and
+      systemd dir before deploying coffee_site.
+
+- name: Ensure coffee_site systemd directory exists
+  ansible.builtin.file:
+    path: "{{ coffee_site_systemd_dir }}"
+    state: directory
+    owner: "{{ coffee_site_owner }}"
+    group: "{{ coffee_site_group }}"
+    mode: "0755"
+
+- name: Deploy coffee-site container systemd unit
+  ansible.builtin.template:
+    src: coffee-site.container.j2
+    dest: "{{ coffee_site_systemd_dir }}/coffee-site.container"
+    owner: "{{ coffee_site_owner }}"
+    group: "{{ coffee_site_group }}"
+    mode: "0644"
+    backup: true
+  notify: Restart coffee-site
+
+- name: Apply notified coffee-site service changes
+  when:
+    - not ansible_check_mode
+    - not coffee_site_rehearsal_mode | bool
+    - coffee_site_manage_service | bool
+  ansible.builtin.meta: flush_handlers
