@@ -28,7 +28,8 @@ Required secrets: `ha_url`, `ha_notify_service`, `ha_bearer_token`.
 
 ## Safety
 
-- Default Quadlet apply is write-only (`frigate_manage_service: false`)
+- Role default is write-only (`frigate_manage_service: false`); `site.yml` sets `true`
+- Apply with `ansible/site.yml --tags frigate`
 - Asserts recovered `config.yaml` exists and is non-empty
 - Asserts `/dev/hailo0` exists before deploy (non-rehearsal)
 - Never templates over `config.yaml`

@@ -4,7 +4,7 @@ Deploys the mre.coffee static site as a Podman Quadlet unit. The image is built
 in [etsauer/coffee-site](https://github.com/etsauer/coffee-site) and pushed to
 Quay.
 
-This role is **not** enabled in `site.yml` until a known-good cutover on the Pi.
+Enabled in `site.yml` with tag `coffee_site`. Preview with `--tags coffee_site --check --diff`.
 
 ## Networking
 
@@ -29,10 +29,10 @@ Caddy still only terminates `hass.mre.coffee`. A later change adds an
 
 ## Safety
 
-Default is write-only. Rehearse with `ansible/test-coffee-site.yml`, preview on
-the Pi with `ansible/fix-coffee-site.yml --check --diff`, then cut over with
-`-e coffee_site_manage_service=true`. Enable the role in `site.yml` only after
-that is known-good.
+Role default is write-only; `site.yml` sets `coffee_site_manage_service: true`.
+Rehearse with `ansible/test-coffee-site.yml`, then apply on the Pi with
+`ansible/site.yml --tags coffee_site`. Write files without restarting:
+`-e coffee_site_manage_service=false`.
 
 If the Quay repository is private, the Pi needs a pull credential (not handled
 by this role yet). Public is simpler.

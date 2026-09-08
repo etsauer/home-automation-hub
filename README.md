@@ -14,6 +14,7 @@ The deployment entrypoint is [`ansible/site.yml`](ansible/site.yml).
 | **Home Assistant** | Home automation core and UI |
 | **Frigate** | NVR / camera detection for the security side of the hub |
 | **Mosquitto** | MQTT broker shared by Home Assistant and Frigate |
+| **mre.coffee** | Static site Quadlet (`coffee_site`); localhost-only until Caddy proxies it |
 | **Podman** | Container runtime underneath the Quadlet units |
 
 ```mermaid
@@ -46,4 +47,11 @@ flowchart LR
 ansible-playbook -i ansible/hosts ansible/site.yml
 ```
 
-Only roles that have been validated against the live host are enabled in `site.yml`. Details for rehearsal and secrets live in [`ansible/README.md`](ansible/README.md).
+One service (tag matches the role name):
+
+```bash
+ansible-playbook -i ansible/hosts ansible/site.yml --tags caddy --check --diff
+ansible-playbook -i ansible/hosts ansible/site.yml --tags caddy
+```
+
+Only roles that have been validated against the live host are enabled in `site.yml`. Details for rehearsal, tags, and secrets live in [`ansible/README.md`](ansible/README.md).

@@ -15,38 +15,23 @@ automation / security hub. The long-term single entrypoint is
   - `ansible/group_vars/all/secrets.yml` (gitignored)
   - `ansible/extracted/`, `ansible/collected/`, `.rehearsal/`, `.ansible-tmp/`
 - Do **not** paste API keys, PATs, or passwords into commits, PRs, or handoffs.
-- Do **not** enable an unvalidated role in `site.yml`. Skeleton / unrecovered
-  roles can overwrite live configs and leave Quadlet “zombie” units
-  (`Loaded: not-found`, `Active: running`).
+- Do **not** enable an unvalidated role in `site.yml`. A bad Quadlet can leave
+  “zombie” units (`Loaded: not-found`, `Active: running`).
 - Prefer `--check --diff` before any apply that touches the Pi.
 - Never run destructive git commands unless the user explicitly asks.
 
-## `site.yml` vs `fix-*` playbooks
+## `site.yml` and tags
 
-- **`site.yml`** is the intended steady-state entrypoint. As each service is
-  recovered and validated, enable that role there (with
-  `*_manage_service: true` for production manage/restart behavior).
-- **`fix-<service>.yml`** playbooks are **temporary** catch-up tools while the
-  repo converges on live server state. They default to write-only
-  (`*_manage_service: false`) so agents can render config with backups before
-  a deliberate cutover.
-- Do not treat `fix-*` as the long-term UX; fold learnings back into the role
-  and enable the service in `site.yml`, then retire the fix playbook when it
-  no longer adds safety.
-
-## Recovery pattern (per unrecovered service)
-
-1. Capture live unit + config from the Pi (or trusted recovered files) before
-   overwriting templates.
-2. Harden the role like Caddy / GoDaddy DDNS: asserts against placeholders,
-   `backup: true`, write-only default, local rehearsal playbook, optional
-   managed restart handler.
-3. Rehearse locally (`ansible/test-<service>.yml` → inspect `.rehearsal/`).
-4. Preview on the Pi with the fix playbook: `--check --diff`.
-5. Apply write-only, inspect rendered files, then cut over (manual restart or
-   `-e <role>_manage_service=true`).
-6. Enable the role in `site.yml` once the live cutover is known-good.
-7. Keep other unrecovered roles commented/disabled in `site.yml`.
+- **`site.yml`** is the only Pi deploy entrypoint. Enabled roles run with
+  `*_manage_service: true`.
+- Apply one service with `--tags <role>` (role name is the tag: `caddy`,
+  `godaddy_ddns`, `mosquitto`, `homeassistant`, `frigate`, `coffee_site`,
+  `podman`). Secrets asserts use the `always` tag so they still run.
+- Preview: `ansible-playbook -i ansible/hosts ansible/site.yml --tags caddy --check --diff`
+- Write files without restarting: add `-e caddy_manage_service=false` (same
+  pattern for other `*_manage_service` vars).
+- Rehearse templates locally with `ansible/test-<service>.yml`; do not add
+  one-off Pi playbooks per service.
 
 ## Currently enabled in `site.yml`
 
@@ -56,10 +41,7 @@ automation / security hub. The long-term single entrypoint is
 - `mosquitto`
 - `homeassistant`
 - `frigate`
-
-`coffee_site` (mre.coffee Quadlet) is present with `test-coffee-site.yml` /
-`fix-coffee-site.yml` but is **not** enabled in `site.yml` until a known-good
-Pi cutover. Do not add it to `site.yml` from this skeleton alone.
+- `coffee_site` (localhost-only until Caddy grows an `mre.coffee` site)
 
 ## Secrets
 

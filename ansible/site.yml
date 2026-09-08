@@ -1,7 +1,11 @@
 ---
 # Steady-state entrypoint for the home automation hub.
 # Only enable roles that have been validated against the live Pi.
-# Unrecovered services stay commented until their fix-* cutover is done.
+#
+# Single-service apply (does not run other roles):
+#   ansible-playbook -i ansible/hosts ansible/site.yml --tags caddy --check --diff
+# Write files without restarting a service:
+#   ansible-playbook -i ansible/hosts ansible/site.yml --tags caddy -e caddy_manage_service=false
 - name: Configure Raspberry Pi hosts
   hosts: pi
   become: true
@@ -10,6 +14,7 @@
     - group_vars/all/secrets.yml
   pre_tasks:
     - name: Ensure secrets required by enabled roles are defined
+      tags: always
       ansible.builtin.assert:
         that:
           - gd_key is defined
@@ -38,20 +43,30 @@
   roles:
     # Runtime prerequisite (package only — no podman.socket)
     - role: podman
+      tags: [podman]
 
     # Validated / enabled application services
     - role: caddy
+      tags: [caddy]
       vars:
         caddy_manage_service: true
     - role: godaddy_ddns
+      tags: [godaddy_ddns]
       vars:
         gd_manage_service: true
     - role: mosquitto
+      tags: [mosquitto]
       vars:
         mosq_manage_service: true
     - role: homeassistant
+      tags: [homeassistant]
       vars:
         ha_manage_service: true
     - role: frigate
+      tags: [frigate]
       vars:
         frigate_manage_service: true
+    - role: coffee_site
+      tags: [coffee_site]
+      vars:
+        coffee_site_manage_service: true

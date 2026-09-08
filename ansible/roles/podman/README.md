@@ -22,4 +22,5 @@ can deploy `.container` units.
 
 ## site.yml
 
-Runs first as a prerequisite before Caddy / DDNS / Mosquitto / HA / Frigate.
+Runs first as a prerequisite. Tag: `podman`. Other services: `caddy`,
+`godaddy_ddns`, `mosquitto`, `homeassistant`, `frigate`, `coffee_site`.
