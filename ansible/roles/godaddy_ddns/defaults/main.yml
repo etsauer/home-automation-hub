@@ -1,7 +1,10 @@
 ---
 # godaddy ddns defaults
 gd_domain: mre.coffee
-gd_subdomain: hass
+# A-record names relative to the zone. "@" is the apex (mre.coffee).
+gd_record_names:
+  - hass
+  - "@"
 gd_image: docker.io/alpine:latest
 # Container-only script lives under /etc (not /usr/local/bin host PATH).
 gd_script_path: /etc/godaddy-ddns/godaddy-ddns.sh

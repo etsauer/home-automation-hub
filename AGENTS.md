@@ -42,7 +42,7 @@ automation / security hub. The long-term single entrypoint is
 - `mosquitto`
 - `homeassistant`
 - `frigate`
-- `coffee_site` (localhost-only until Caddy grows an `mre.coffee` site)
+- `coffee_site` (Caddy proxies `mre.coffee` → localhost:8080)
 
 ## Secrets
 

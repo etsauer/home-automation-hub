@@ -9,7 +9,16 @@ caddy_group: root
 caddy_rehearsal_mode: false
 # When false: write Caddyfile + .container only (with backups). No daemon-reload, enable, or start.
 caddy_manage_service: false
-caddy_domain: hass.mre.coffee
 caddy_email: ""
-caddy_upstream_host: localhost
-caddy_upstream_port: 8123
+# Each site needs `names` (list of hostnames) and either `upstream` (host:port)
+# or `redir` (Caddy redir target, e.g. https://mre.coffee{uri}).
+# Keep hass.mre.coffee in this list — dropping it takes down Home Assistant TLS.
+# mre.coffee must match coffee_site_publish_ip/port (127.0.0.1:8080).
+# Do not add www until an A record points at the Pi (ACME would fail and retry).
+caddy_sites:
+  - names:
+      - hass.mre.coffee
+    upstream: localhost:8123
+  - names:
+      - mre.coffee
+    upstream: localhost:8080

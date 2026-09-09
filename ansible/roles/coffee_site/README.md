@@ -12,8 +12,7 @@ The container publishes **only** on localhost (`127.0.0.1:8080` → container 80
 so it is not reachable from the LAN or internet until Caddy proxies it. Do not
 publish Frigate or MQTT on this hostname.
 
-Caddy still only terminates `hass.mre.coffee`. A later change adds an
-`mre.coffee` site block pointing at this port.
+Caddy proxies `mre.coffee` → this port (`localhost:8080`).
 
 ## Variables of interest
 

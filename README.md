@@ -9,21 +9,22 @@ The deployment entrypoint is [`ansible/site.yml`](ansible/site.yml).
 
 | Service | Role |
 | --- | --- |
-| **Caddy** | TLS reverse proxy terminating HTTPS for Home Assistant |
-| **GoDaddy DDNS** | Keeps the public `hass` DNS A record pointed at the home IP |
+| **Caddy** | TLS reverse proxy for `hass.mre.coffee` and `mre.coffee` |
+| **GoDaddy DDNS** | Keeps public A records for `hass.mre.coffee` and apex `mre.coffee` pointed at the home IP |
 | **Home Assistant** | Home automation core and UI |
 | **Frigate** | NVR / camera detection for the security side of the hub |
 | **Mosquitto** | MQTT broker shared by Home Assistant and Frigate |
-| **mre.coffee** | Static site Quadlet (`coffee_site`); localhost-only until Caddy proxies it |
+| **mre.coffee** | Static site Quadlet (`coffee_site`); Caddy proxies `mre.coffee` → localhost:8080 |
 | **Podman** | Container runtime underneath the Quadlet units |
 
 ```mermaid
 flowchart LR
   Internet((Internet))
   DDNS[GoDaddy DDNS]
-  DNS["DNS hass.mre.coffee"]
+  DNS["DNS hass + apex mre.coffee"]
   Caddy[Caddy]
   HA[Home Assistant]
+  Site[coffee-site]
   Frigate[Frigate]
   MQTT[Mosquitto]
   Cams[Cameras]
@@ -32,6 +33,7 @@ flowchart LR
   Internet -->|HTTPS| DNS
   DNS --> Caddy
   Caddy -->|localhost:8123| HA
+  Caddy -->|localhost:8080| Site
   Cams -->|RTSP| Frigate
   Frigate <-->|MQTT| MQTT
   HA <-->|MQTT| MQTT

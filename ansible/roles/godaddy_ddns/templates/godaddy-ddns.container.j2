@@ -12,6 +12,6 @@ Image={{ gd_image }}
 Environment=GD_KEY={{ gd_key }}
 Environment=GD_SECRET={{ gd_secret }}
 Environment=GD_DOMAIN={{ gd_domain }}
-Environment=GD_SUBDOMAIN={{ gd_subdomain }}
+Environment=GD_RECORD_NAMES={{ gd_record_names | join(',') }}
 Volume={{ gd_script_path }}:/godaddy-ddns.sh:ro,Z
 Exec=/godaddy-ddns.sh
