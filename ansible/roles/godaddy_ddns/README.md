@@ -8,13 +8,18 @@ in `docker.io/alpine:latest` (installs `curl`/`jq` at container start).
 - Script at `/etc/godaddy-ddns/godaddy-ddns.sh` (service config dir, not host PATH),
   mounted read-only into the container as `/godaddy-ddns.sh`
 - Quadlet `[Container]` with `Environment=` for `GD_KEY`, `GD_SECRET`, `GD_DOMAIN`,
-  `GD_SUBDOMAIN` and `Exec=/godaddy-ddns.sh`
-- Loop polls public IP and upserts the `hass` A record via GoDaddy's v3 zones API
+  `GD_RECORD_NAMES` and `Exec=/godaddy-ddns.sh`
+- Loop polls public IP and upserts A records via GoDaddy's v3 zones API
+  (`PUT` when a `type=A` record exists, `POST` when it does not)
+- Default names: `hass` (`hass.mre.coffee`) and `@` (apex `mre.coffee`)
 - Legacy `/usr/local/bin/godaddy-ddns.sh` is removed on deploy when present
+
+`www` is not managed here until you add a `www` A (or CNAME) and a Caddy site.
 
 ## Variables of interest
 
-- `gd_domain` / `gd_subdomain` (defaults: `mre.coffee` / `hass`)
+- `gd_domain` (default `mre.coffee`)
+- `gd_record_names` (default `[hass, "@"]`; role asserts both stay present)
 - `gd_key` / `gd_secret` (from `group_vars/all/secrets.yml`, required)
 - `gd_image`
 - `gd_script_path` (default `/etc/godaddy-ddns/godaddy-ddns.sh`)
@@ -33,6 +38,14 @@ in `docker.io/alpine:latest` (installs `curl`/`jq` at container start).
 Role default is write-only; `site.yml` sets `gd_manage_service: true`.
 Rehearse with `ansible/test-godaddy-ddns.yml`. Apply with
 `ansible/site.yml --tags godaddy_ddns`. Write-only: `-e gd_manage_service=false`.
+
+GET filters `type=A` so MX/TXT at the apex are not deleted. Extra A records
+for the same name (for example a leftover S3 address) are removed after a
+successful upsert.
+
+Apex `recordId` values from GoDaddy can contain `[]`. curl treats those as
+URL globs (exit 3) unless `--globoff` is set; the script URL-encodes IDs and
+does not exit the loop if one name fails.
 
 ## Future work: PAT expiry
 

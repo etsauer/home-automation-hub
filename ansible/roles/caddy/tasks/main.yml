@@ -1,15 +1,33 @@
 ---
-- name: Validate Caddy configuration values
+- name: Validate Caddy sites
   ansible.builtin.assert:
     that:
-      - caddy_domain is defined
-      - caddy_domain | length > 0
-      - caddy_domain != "example.com"
-      - caddy_upstream_host is defined
-      - caddy_upstream_host | length > 0
-      - caddy_upstream_port is defined
+      - caddy_sites is defined
+      - caddy_sites | length > 0
     fail_msg: >-
-      Set a real caddy_domain (not example.com) and upstream host/port before deploying Caddy.
+      Define caddy_sites as a non-empty list before deploying Caddy.
+
+- name: Validate each Caddy site entry
+  ansible.builtin.assert:
+    that:
+      - item.names is defined
+      - item.names | length > 0
+      - "'example.com' not in item.names"
+      - (item.upstream | default('') | length > 0) or (item.redir | default('') | length > 0)
+      - not ((item.upstream | default('') | length > 0) and (item.redir | default('') | length > 0))
+    fail_msg: >-
+      Each caddy_sites entry needs names plus exactly one of upstream or redir
+      (not example.com).
+  loop: "{{ caddy_sites }}"
+  loop_control:
+    label: "{{ item.names | join(',') }}"
+
+- name: Keep the Home Assistant vhost in the Caddyfile
+  ansible.builtin.assert:
+    that:
+      - "'hass.mre.coffee' in (caddy_sites | map(attribute='names') | flatten)"
+    fail_msg: >-
+      caddy_sites must include hass.mre.coffee or Home Assistant TLS will drop.
 
 - name: Ensure caddy config dir exists
   ansible.builtin.file:
